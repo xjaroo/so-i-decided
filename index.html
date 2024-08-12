@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SOI Communications - Your Partner in Innovative Software Solutions">
+    <meta name="description" content="SOI Communications - Delivering cutting-edge software solutions for your business needs">
     <title>SOI Communications</title>
     <style>
         body {
@@ -11,21 +11,23 @@
             margin: 0;
             padding: 0;
             color: #333;
-            background-color: #f4f4f4;
+            background-color: #f9f9f9;
         }
         header {
-            background-color: #007BFF;
+            background-color: #004d99;
             color: #fff;
-            padding: 20px;
+            padding: 20px 0;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         header h1 {
             margin: 0;
-            font-size: 2em;
+            font-size: 2.5em;
         }
         nav ul {
             list-style: none;
             padding: 0;
+            margin: 10px 0;
         }
         nav ul li {
             display: inline;
@@ -34,43 +36,78 @@
         nav ul li a {
             color: #fff;
             text-decoration: none;
+            font-size: 1.1em;
+            transition: color 0.3s ease;
         }
-        section {
-            padding: 20px;
+        nav ul li a:hover {
+            color: #cce0ff;
         }
         .hero {
-            background-color: #007BFF;
+            background: linear-gradient(135deg, #004d99 0%, #0066cc 100%);
             color: #fff;
-            padding: 40px;
             text-align: center;
+            padding: 80px 20px;
         }
         .hero h2 {
             margin: 0;
-            font-size: 2.5em;
+            font-size: 3em;
         }
-        .services, .contact {
+        .hero p {
+            font-size: 1.2em;
+            margin: 20px 0 0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 40px 0;
+            padding: 20px;
             background-color: #fff;
-            margin: 20px 0;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .services h3, .contact h3 {
-            background-color: #007BFF;
-            color: #fff;
-            padding: 15px;
-            margin: 0;
+        .section h3 {
+            margin-top: 0;
+            font-size: 2em;
+            color: #004d99;
         }
-        .services p, .contact p {
-            padding: 15px;
+        .section p {
+            font-size: 1em;
+            line-height: 1.6;
+        }
+        .services ul {
+            list-style: none;
+            padding: 0;
+        }
+        .services ul li {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
         }
         footer {
             background-color: #333;
             color: #fff;
             text-align: center;
-            padding: 10px;
-            position: absolute;
+            padding: 15px;
+            position: relative;
             bottom: 0;
             width: 100%;
+        }
+        footer p {
+            margin: 0;
+        }
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 2em;
+            }
+            .hero p {
+                font-size: 1em;
+            }
+            nav ul li {
+                display: block;
+                margin: 10px 0;
+            }
         }
     </style>
 </head>
@@ -81,6 +118,7 @@
             <ul>
                 <li><a href="#home">Home</a></li>
                 <li><a href="#services">Services</a></li>
+                <li><a href="#about">About Us</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
         </nav>
@@ -88,25 +126,32 @@
 
     <section id="home" class="hero">
         <h2>Welcome to SOI Communications</h2>
-        <p>Innovative software solutions for your business needs.</p>
+        <p>Innovative software solutions tailored for your business needs.</p>
     </section>
 
-    <section id="services" class="services">
-        <h3>Our Services</h3>
-        <p>At SOI Communications, we offer a range of services to help your business succeed:</p>
-        <ul>
-            <li>Custom Software Development</li>
-            <li>Web and Mobile Applications</li>
-            <li>System Integration</li>
-            <li>Consulting and Support</li>
-        </ul>
-    </section>
+    <div class="container">
+        <section id="services" class="section services">
+            <h3>Our Services</h3>
+            <p>At SOI Communications, we offer a comprehensive suite of services designed to help your business thrive in a digital world:</p>
+            <ul>
+                <li>Custom Software Development</li>
+                <li>Web and Mobile Applications</li>
+                <li>System Integration</li>
+                <li>Consulting and Support</li>
+            </ul>
+        </section>
 
-    <section id="contact" class="contact">
-        <h3>Contact Us</h3>
-        <p>We'd love to hear from you. Reach out to us through the following:</p>
-        <p>Email: <a href="mailto:cheonyounga@gmail.com">info@soicommunications.com</a></p>        
-    </section>
+        <section id="about" class="section">
+            <h3>About Us</h3>
+            <p>SOI Communications is a leading provider of cutting-edge software solutions. Our team of experienced developers and consultants are dedicated to delivering high-quality software that meets the unique needs of our clients. We pride ourselves on innovation, reliability, and exceptional customer service.</p>
+        </section>
+
+        <section id="contact" class="section">
+            <h3>Contact Us</h3>
+            <p>We would love to hear from you. Reach out to us through the following channels:</p>
+            <p>Email: <a href="mailto:cheonyounga@gmail.com">info@soicommunications.com</a></p>           
+        </section>
+    </div>
 
     <footer>
         <p>&copy; 2024 SOI Communications. All rights reserved.</p>
