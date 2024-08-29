@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Viewer</title>
+    <meta name="description" content="A professional and easy-to-use JSON Viewer that formats, color-codes, and allows searching within JSON data.">
+    <meta name="keywords" content="JSON Viewer, JSON Formatter, JSON Highlighter, JSON Search, View JSON, Format JSON">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .output {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .key {
+            color: #d6336c;
+        }
+
+        .string {
+            color: #20c997;
+        }
+
+        .number {
+            color: #fd7e14;
+        }
+
+        .boolean {
+            color: #6610f2;
+        }
+
+        .null {
+            color: #6c757d;
+        }
+
+        .search-box {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .search-box input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Professional JSON Viewer</h1>
+    <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+    <button onclick="formatJSON()">Format JSON</button>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search key or value..." oninput="highlightSearch()">
+    </div>
+
+    <div id="output" class="output"></div>
+</div>
+
+<script>
+    let originalFormattedJSON = '';
+
+    function formatJSON() {
+        const input = document.getElementById('jsonInput').value;
+        try {
+            const json = JSON.parse(input);
+            originalFormattedJSON = syntaxHighlight(JSON.stringify(json, null, 4));
+            document.getElementById('output').innerHTML = originalFormattedJSON;
+        } catch (error) {
+            document.getElementById('output').textContent = 'Invalid JSON';
+        }
+    }
+
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/(".*?")(\s*:)?|(\b\d+(\.\d+)?\b)|(\btrue\b|\bfalse\b)|\bnull\b/g, function (match, p1, p2, p3, p4, p5) {
+            let cls = 'key';
+            if (p1) {
+                cls = p2 ? 'key' : 'string';
+            } else if (p3) {
+                cls = 'number';
+            } else if (p5) {
+                cls = 'boolean';
+            } else if (match === 'null') {
+                cls = 'null';
+            }
+            return `<span class="${cls}">${match}</span>`;
+        });
+    }
+
+    function highlightSearch() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const outputDiv = document.getElementById('output');
+        if (!searchValue) {
+            outputDiv.innerHTML = originalFormattedJSON;
+            return;
+        }
+        const regex = new RegExp(`(${searchValue})`, 'gi');
+        outputDiv.innerHTML = originalFormattedJSON.replace(/<mark>|<\/mark>/g, '');
+        outputDiv.innerHTML = outputDiv.innerHTML.replace(regex, `<mark>$1</mark>`);
+    }
+</script>
+</body>
+</html>
