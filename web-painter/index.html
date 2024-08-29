@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painter with Image Selection, Resize, Zoom, and Pan</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: flex-start;
+            padding: 10px;
+            background-color: #ccc;
+            z-index: 10;
+        }
+
+        .controls label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        #canvas {
+            flex-grow: 1;
+            cursor: crosshair;
+        }
+
+        #canvas.pointer-mode {
+            cursor: pointer;
+        }
+
+        #canvas.pan-mode {
+            cursor: grab;
+        }
+
+        .mode-switch {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .mode-switch button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mode-switch button.selected {
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+
+        .mode-switch button img {
+            width: 30px;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <label for="color">Color:</label>
+    <input type="color" id="color" value="#000000">
+
+    <label for="size">Size:</label>
+    <input type="number" id="size" value="5" min="1" max="50">
+
+    <button id="clear">Clear Canvas</button>
+
+    <div class="mode-switch">
+        <button id="paintMode" class="selected">
+            <img src="https://img.icons8.com/ios-filled/50/000000/paint-brush.png" alt="Paint Mode">
+        </button>
+        <button id="selectMode">
+            <img src="https://img.icons8.com/ios-filled/50/000000/select.png" alt="Select Mode">
+        </button>
+    </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('color');
+    const sizePicker = document.getElementById('size');
+    const clearButton = document.getElementById('clear');
+    const paintModeButton = document.getElementById('paintMode');
+    const selectModeButton = document.getElementById('selectMode');
+
+    let painting = false;
+    let pastedImage = null;
+    let imageX = 0, imageY = 0, imageWidth = 0, imageHeight = 0;
+    let isDragging = false, isResizing = false;
+    let offsetX = 0, offsetY = 0;
+    let resizeCorner = null;
+    let mode = 'paint'; // default mode is paint
+    let scale = 1;
+    let translatePos = { x: 0, y: 0 };
+    let startPan = { x: 0, y: 0 };
+    let panning = false;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - document.querySelector('.controls').offsetHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function drawRedDots() {
+        if (pastedImage) {
+            const corners = [
+                { x: imageX, y: imageY }, // Top-left
+                { x: imageX + imageWidth, y: imageY }, // Top-right
+                { x: imageX, y: imageY + imageHeight }, // Bottom-left
+                { x: imageX + imageWidth, y: imageY + imageHeight } // Bottom-right
+            ];
+
+            ctx.fillStyle = 'red';
+            corners.forEach(corner => {
+                ctx.beginPath();
+                ctx.arc(corner.x, corner.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+    }
+
+    function startPosition(e) {
+        if (panning) {
+            startPan = { x: e.clientX - translatePos.x, y: e.clientY - translatePos.y };
+        } else if (mode === 'paint') {
+            painting = true;
+            draw(e);
+        } else if (mode === 'select' && pastedImage) {
+            const mouseX = (e.clientX - translatePos.x) / scale;
+            const mouseY = (e.clientY - document.querySelector('.controls').offsetHeight - translatePos.y) / scale;
+
+            // Check if the user is clicking on a corner dot for resizing
+            const corners = [
+                { x: imageX, y: imageY }, // Top-left
+                { x: imageX + imageWidth, y: imageY }, // Top-right
+                { x: imageX, y: imageY + imageHeight }, // Bottom-left
+                { x: imageX + imageWidth, y: imageY + imageHeight } // Bottom-right
+            ];
+
+            for (let i = 0; i < corners.length; i++) {
+                const corner = corners[i];
+                if (Math.hypot(mouseX - corner.x, mouseY - corner.y) < 10) {
+                    isResizing = true;
+                    resizeCorner = i;
+                    return;
+                }
+            }
+
+            if (mouseX > imageX && mouseX < imageX + imageWidth &&
+                mouseY > imageY && mouseY < imageY + imageHeight) {
+                isDragging = true;
+                offsetX = mouseX - imageX;
+                offsetY = mouseY - imageY;
+            }
+        }
+    }
+
+    function endPosition() {
+        painting = false;
+        isDragging = false;
+        isResizing = false;
+        panning = false;
+        resizeCorner = null;
+        canvas.classList.remove('panning');
+        ctx.beginPath();
+    }
+
+    function draw(e) {
+        if (!painting) return;
+
+        ctx.lineWidth = sizePicker.value;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = colorPicker.value;
+
+        ctx.lineTo((e.clientX - translatePos.x) / scale, (e.clientY - document.querySelector('.controls').offsetHeight - translatePos.y) / scale);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo((e.clientX - translatePos.x) / scale, (e.clientY - document.querySelector('.controls').offsetHeight - translatePos.y) / scale);
+    }
+
+    function drawPastedImage() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(translatePos.x, translatePos.y);
+        ctx.scale(scale, scale);
+        ctx.drawImage(pastedImage, imageX, imageY, imageWidth, imageHeight);
+        drawRedDots();
+        ctx.restore();
+    }
+
+    function resizeAndDrawImage(width, height) {
+        if (resizeCorner === 0) { // Top-left corner
+            imageWidth += imageX - (imageX = imageX + width - imageWidth);
+            imageHeight += imageY - (imageY = imageY + height - imageHeight);
+        } else if (resizeCorner === 1) { // Top-right corner
+            imageWidth = width;
+            imageY += imageHeight - (imageHeight = height);
+        } else if (resizeCorner === 2) { // Bottom-left corner
+            imageX += imageWidth - (imageWidth = width);
+            imageHeight = height;
+        } else if (resizeCorner === 3) { // Bottom-right corner
+            imageWidth = width;
+            imageHeight = height;
+        }
+        drawPastedImage();
+    }
+
+    canvas.addEventListener('mousedown', startPosition);
+    canvas.addEventListener('mouseup', endPosition);
+    canvas.addEventListener('mousemove', (e) => {
+        if (panning) {
+            translatePos.x = e.clientX - startPan.x;
+            translatePos.y = e.clientY - startPan.y;
+            drawPastedImage();
+        } else if (mode === 'paint') {
+            draw(e);
+        } else if (mode === 'select' && pastedImage) {
+            if (isDragging) {
+                imageX = (e.clientX - translatePos.x) / scale - offsetX;
+                imageY = (e.clientY - document.querySelector('.controls').offsetHeight - translatePos.y) / scale - offsetY;
+                drawPastedImage();
+            } else if (isResizing) {
+                const newWidth = (e.clientX - translatePos.x) / scale - imageX;
+                const newHeight = (e.clientY - document.querySelector('.controls').offsetHeight - translatePos.y) / scale - imageY;
+                resizeAndDrawImage(newWidth, newHeight);
+            }
+        }
+    });
+
+    clearButton.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pastedImage = null;
+    });
+
+    window.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                const img = new Image();
+                const url = URL.createObjectURL(blob);
+
+                img.onload = () => {
+                    pastedImage = img;
+                    imageX = 0;
+                    imageY = 0;
+                    imageWidth = canvas.width * 0.9;  // 90% of canvas width
+                    imageHeight = (imageWidth / img.width) * img.height;
+
+                    if (imageHeight > canvas.height - 20) {
+                        imageHeight = canvas.height - 20;
+                        imageWidth = (imageHeight / img.height) * img.width;
+                    }
+
+                    drawPastedImage();
+                    URL.revokeObjectURL(url);
+                };
+
+                img.src = url;
+            }
+        }
+    });
+
+    function setMode(newMode) {
+        mode = newMode;
+        if (mode === 'paint') {
+            canvas.classList.remove('pointer-mode');
+            paintModeButton.classList.add('selected');
+            selectModeButton.classList.remove('selected');
+        } else if (mode === 'select') {
+            canvas.classList.add('pointer-mode');
+            selectModeButton.classList.add('selected');
+            paintModeButton.classList.remove('selected');
+        }
+    }
+
+    function handleZoom(e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            const zoomIntensity = 0.1;
+            const mousePos = { x: e.clientX - canvas.offsetLeft, y: e.clientY - canvas.offsetTop };
+            const wheel = e.deltaY < 0 ? 1 : -1;
+
+            const zoom = Math.exp(wheel * zoomIntensity);
+            scale *= zoom;
+
+            translatePos.x -= (mousePos.x / scale - mousePos.x / (scale / zoom));
+            translatePos.y -= (mousePos.y / scale - mousePos.y / (scale / zoom));
+
+            drawPastedImage();
+        }
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === ' ') {
+            panning = true;
+            canvas.classList.add('pan-mode');
+        }
+    }
+
+    function handleKeyUp(e) {
+        if (e.key === ' ') {
+            panning = false;
+            canvas.classList.remove('pan-mode');
+        }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    canvas.addEventListener('wheel', handleZoom);
+
+    paintModeButton.addEventListener('click', () => setMode('paint'));
+    selectModeButton.addEventListener('click', () => setMode('select'));
+</script>
+
+</body>
+</html>
