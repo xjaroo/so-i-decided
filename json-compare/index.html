@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Viewer & Comparator</title>
+    <meta name="description" content="A professional and easy-to-use JSON Viewer and Comparator that formats, color-codes, and allows searching within JSON data.">
+    <meta name="keywords" content="JSON Viewer, JSON Formatter, JSON Highlighter, JSON Search, Compare JSON, View JSON, Format JSON">
+    <meta name="google-adsense-account" content="ca-pub-4284385164395208">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4284385164395208"
+            crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .output {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .key {
+            color: #d6336c;
+        }
+
+        .string {
+            color: #20c997;
+        }
+
+        .number {
+            color: #fd7e14;
+        }
+
+        .boolean {
+            color: #6610f2;
+        }
+
+        .null {
+            color: #6c757d;
+        }
+
+        .diff {
+            background-color: #ffefef;
+            color: #d9534f;
+        }
+
+        .search-box {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .search-box input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .comparison {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .comparison .output {
+            width: 48%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Professional JSON Viewer & Comparator</h1>
+    <textarea id="jsonInput1" placeholder="Paste your first JSON here..."></textarea>
+    <textarea id="jsonInput2" placeholder="Paste your second JSON here..."></textarea>
+    <button onclick="formatAndCompareJSON()">Format & Compare JSON</button>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search key or value in both JSONs..." oninput="highlightSearch()">
+    </div>
+
+    <div class="comparison">
+        <div id="output1" class="output"></div>
+        <div id="output2" class="output"></div>
+    </div>
+</div>
+
+<script>
+    let originalFormattedJSON1 = '';
+    let originalFormattedJSON2 = '';
+
+    function formatAndCompareJSON() {
+        const input1 = document.getElementById('jsonInput1').value;
+        const input2 = document.getElementById('jsonInput2').value;
+        try {
+            const json1 = JSON.parse(input1);
+            const json2 = JSON.parse(input2);
+            originalFormattedJSON1 = syntaxHighlight(JSON.stringify(json1, null, 4), json1, json2);
+            originalFormattedJSON2 = syntaxHighlight(JSON.stringify(json2, null, 4), json2, json1);
+            document.getElementById('output1').innerHTML = originalFormattedJSON1;
+            document.getElementById('output2').innerHTML = originalFormattedJSON2;
+        } catch (error) {
+            document.getElementById('output1').textContent = 'Invalid JSON';
+            document.getElementById('output2').textContent = 'Invalid JSON';
+        }
+    }
+
+    function syntaxHighlight(json, currentJSON, compareJSON) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/(".*?")(\s*:)?|(\b\d+(\.\d+)?\b)|(\btrue\b|\bfalse\b)|\bnull\b/g, function (match, p1, p2, p3, p4, p5) {
+            let cls = 'key';
+            let key = p1 ? p1.replace(/"/g, '') : '';
+            let value = match.replace(/"/g, '');
+
+            if (p1) {
+                cls = p2 ? 'key' : 'string';
+                if (p2 && !isEqual(currentJSON[key], compareJSON[key])) {
+                    cls += ' diff';
+                }
+            } else if (p3) {
+                cls = 'number';
+                if (!isEqual(parseFloat(value), getCompareValue(currentJSON, compareJSON, key))) {
+                    cls += ' diff';
+                }
+            } else if (p5) {
+                cls = 'boolean';
+                const boolValue = value === 'true';
+                if (!isEqual(boolValue, getCompareValue(currentJSON, compareJSON, key))) {
+                    cls += ' diff';
+                }
+            } else if (match === 'null') {
+                cls = 'null';
+                if (!isEqual(null, getCompareValue(currentJSON, compareJSON, key))) {
+                    cls += ' diff';
+                }
+            }
+            return `<span class="${cls}">${match}</span>`;
+        });
+    }
+
+    function isEqual(value1, value2) {
+        return JSON.stringify(value1) === JSON.stringify(value2);
+    }
+
+    function getCompareValue(currentJSON, compareJSON, key) {
+        if (key in currentJSON) return currentJSON[key];
+        return compareJSON;
+    }
+
+    function highlightSearch() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const outputDiv1 = document.getElementById('output1');
+        const outputDiv2 = document.getElementById('output2');
+        if (!searchValue) {
+            outputDiv1.innerHTML = originalFormattedJSON1;
+            outputDiv2.innerHTML = originalFormattedJSON2;
+            return;
+        }
+        const regex = new RegExp(`(${searchValue})`, 'gi');
+        outputDiv1.innerHTML = originalFormattedJSON1.replace(/<mark>|<\/mark>/g, '');
+        outputDiv2.innerHTML = originalFormattedJSON2.replace(/<mark>|<\/mark>/g, '');
+        outputDiv1.innerHTML = outputDiv1.innerHTML.replace(regex, `<mark>$1</mark>`);
+        outputDiv2.innerHTML = outputDiv2.innerHTML.replace(regex, `<mark>$1</mark>`);
+    }
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4284385164395208"
+        crossorigin="anonymous"></script>
+<!-- a1 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-4284385164395208"
+     data-ad-slot="6900932450"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</body>
+</html>
