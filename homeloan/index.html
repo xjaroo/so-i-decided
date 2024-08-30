@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Loans Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #d32f2f;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #555555;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333333;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .output-group {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .output-group h3 {
+            margin: 0;
+            font-size: 22px;
+            color: #d32f2f;
+            text-align: right;
+        }
+        .output-group p {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #555555;
+        }
+        .output-group .small-text {
+            font-size: 12px;
+            color: #888888;
+        }
+        .output-group .breakdown {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #555555;
+            padding-left: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #d32f2f;
+            color: #ffffff;
+            text-align: center;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #b71c1c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="title">Home Loans Calculator</div>
+
+    <div class="input-group">
+        <label for="property-price">Property price</label>
+        <input type="number" id="property-price" value="380000">
+        <div class="small-text">Suburb median: $380,000</div>
+    </div>
+
+    <div class="input-group">
+        <label for="savings">Your savings</label>
+        <input type="number" id="savings" value="320000">
+    </div>
+
+    <div class="output-group">
+        <h3 id="estimated-repayments">$207 per fortnight</h3>
+        <p>Stamp duty: <span id="stamp-duty">$12,065</span></p>
+        <p>Transfer fee: <span id="transfer-fee">$258</span></p>
+        <p>Government fees: <span id="government-fees">$188</span></p>
+        <p>LMI: <span id="lmi-cost">$0</span></p>
+        <p>Available deposit: <span id="available-deposit">$307,489</span></p>
+        <p>Loan amount: <span id="loan-amount">$72,511</span></p>
+    </div>
+
+    <a href="#" class="button">Save calculations for later</a>
+</div>
+
+<script>
+    function calculateStampDuty(price) {
+        let stampDuty = 0;
+
+        if (price <= 120000) {
+            stampDuty = price * 1.9 / 100;
+        } else if (price <= 150000) {
+            stampDuty = 2280 + (price - 120000) * 2.85 / 100;
+        } else if (price <= 360000) {
+            stampDuty = 3135 + (price - 150000) * 3.8 / 100;
+        } else if (price <= 725000) {
+            stampDuty = 11115 + (price - 360000) * 4.75 / 100;
+        } else {
+            stampDuty = 28453 + (price - 725000) * 5.15 / 100;
+        }
+
+        return stampDuty.toFixed(2);
+    }
+
+    function calculate() {
+        let price = parseFloat(document.getElementById('property-price').value);
+        let savings = parseFloat(document.getElementById('savings').value);
+
+        let stampDuty = parseFloat(calculateStampDuty(price));
+        let transferFee = 258; // Fixed amount for transfer fee
+        let governmentFees = 188; // Fixed amount for government fees
+
+        let availableDeposit = savings - (stampDuty + transferFee + governmentFees);
+        let loanAmount = price - availableDeposit;
+
+        // LMI Calculation (Example logic: if deposit < 20% of property price)
+        let lmiCost = 0;
+        if (availableDeposit < price * 0.2) {
+            lmiCost = (price - availableDeposit) * 0.01; // Example LMI calculation
+        }
+
+        let estimatedRepayments = Math.round(loanAmount * 0.00545); // Just a sample formula
+
+        document.getElementById('stamp-duty').innerText = `$${stampDuty}`;
+        document.getElementById('transfer-fee').innerText = `$${transferFee}`;
+        document.getElementById('government-fees').innerText = `$${governmentFees}`;
+        document.getElementById('lmi-cost').innerText = `$${lmiCost.toFixed(2)}`;
+        document.getElementById('available-deposit').innerText = `$${Math.round(availableDeposit)}`;
+        document.getElementById('loan-amount').innerText = `$${Math.round(loanAmount)}`;
+        document.getElementById('estimated-repayments').innerText = `$${estimatedRepayments} per fortnight`;
+    }
+
+    document.getElementById('property-price').addEventListener('input', calculate);
+    document.getElementById('savings').addEventListener('input', calculate);
+
+    calculate(); // Initial calculation
+</script>
+
+</body>
+</html>
