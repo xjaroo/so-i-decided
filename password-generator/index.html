@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Password Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+
+<div class="container mx-auto p-8 bg-white rounded-xl shadow-lg w-full max-w-lg">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">Generate a Secure Password</h1>
+  <form id="password-form">
+    <div class="mb-4">
+      <label for="length" class="block text-sm font-medium text-gray-700">Password Length</label>
+      <input type="number" id="length" name="length" min="6" max="64" value="12"
+             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">
+        <input type="checkbox" id="numbers" class="mr-2" checked> Include Numbers
+      </label>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">
+        <input type="checkbox" id="lowercase" class="mr-2" checked> Include Lowercase Letters
+      </label>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">
+        <input type="checkbox" id="uppercase" class="mr-2" checked> Include Uppercase Letters
+      </label>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">
+        <input type="checkbox" id="symbols" class="mr-2"> Include Symbols
+      </label>
+    </div>
+
+    <button type="button" onclick="generatePassword()"
+            class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">
+      Generate Password
+    </button>
+  </form>
+
+  <div id="password-output"
+       class="mt-6 p-4 bg-gray-100 text-gray-900 text-lg font-mono rounded-lg hidden">
+  </div>
+
+  <div id="copy-message"
+       class="text-sm text-green-600 mt-4 hidden">
+    Password copied to clipboard!
+  </div>
+</div>
+
+<script>
+  function generatePassword() {
+    const length = document.getElementById('length').value;
+    const includeNumbers = document.getElementById('numbers').checked;
+    const includeLowercase = document.getElementById('lowercase').checked;
+    const includeUppercase = document.getElementById('uppercase').checked;
+    const includeSymbols = document.getElementById('symbols').checked;
+
+    const numbers = '0123456789';
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const symbols = '!@#$%^&*()_+[]{}|;:,.<>?';
+
+    let characters = '';
+    if (includeNumbers) characters += numbers;
+    if (includeLowercase) characters += lowercase;
+    if (includeUppercase) characters += uppercase;
+    if (includeSymbols) characters += symbols;
+
+    if (characters === '') {
+      alert('Please select at least one character set');
+      return;
+    }
+
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+
+    const passwordOutput = document.getElementById('password-output');
+    passwordOutput.textContent = password;
+    passwordOutput.classList.remove('hidden');
+
+    // Copy password to clipboard
+    navigator.clipboard.writeText(password).then(function() {
+      const copyMessage = document.getElementById('copy-message');
+      copyMessage.classList.remove('hidden');
+      setTimeout(() => {
+        copyMessage.classList.add('hidden');
+      }, 2000);  // Hide the copy message after 2 seconds
+    }, function(err) {
+      alert('Failed to copy password: ', err);
+    });
+  }
+</script>
+
+</body>
+</html>
