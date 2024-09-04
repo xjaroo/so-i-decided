@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Tools </title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+      text-decoration: none;
+      color: #333;
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-image {
+      width: 100%;
+      padding-top: 70%; /* Aspect ratio 70% */
+      background-color: #ddd;
+      position: relative;
+    }
+
+    .card-image img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: initial;
+    }
+
+    .card-description {
+      padding: 15px;
+      flex: 1;
+    }
+
+    .card-description p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="card-container">
+  <a href="/add-quotes" class="card">
+    <div class="card-image">
+      <img src="/img/text-convert.png"  alt="multi-line text into single-quoted strings">
+    </div>
+    <div class="card-description">
+      <p>multi-line text into single-quoted strings</p>
+    </div>
+  </a>
+  <a href="/homeloan" class="card">
+    <div class="card-image">
+      <img src="/img/home-loan-calculator.png" alt="Home Loan Calculator">
+    </div>
+    <div class="card-description">
+      <p>Home Loan Calculator</p>
+    </div>
+  </a>
+  <a href="/json-compare" class="card">
+    <div class="card-image">
+      <img src="/img/json-compare.png" alt="Json Compare">
+    </div>
+    <div class="card-description">
+      <p>Json Compare</p>
+    </div>
+  </a>
+  <a href="/json-viewer" class="card">
+    <div class="card-image">
+      <img src="/img/json-viewer.png" alt="Json Viewer">
+    </div>
+    <div class="card-description">
+      <p>Json Viewer</p>
+    </div>
+  </a>
+  <a href="/password-generator" class="card">
+    <div class="card-image">
+      <img src="/img/password-generator.png" alt="password Generator">
+    </div>
+    <div class="card-description">
+      <p>password Generator</p>
+    </div>
+  </a>
+</div>
+
+<script>
+  // JavaScript can be added here for additional interactivity or dynamic loading of cards
+  // Currently, no JavaScript is needed for basic functionality
+</script>
+</body>
+</html>

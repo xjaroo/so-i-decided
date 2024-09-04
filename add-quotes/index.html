@@ -53,7 +53,7 @@
 <body>
 <div class="container">
     <h2>Text Converter</h2>
-    <textarea id="inputText" placeholder="Enter text here..."></textarea>
+    <label for="inputText"></label><textarea id="inputText" placeholder="Enter text here to convert as AAA, BBB to 'AAA','BBB'"></textarea>
     <button onclick="saveToClipboard()">Save to Clipboard</button>
     <div class="output" id="outputText"></div>
 </div>
@@ -61,10 +61,17 @@
 <script>
     function convertText() {
         const inputText = document.getElementById('inputText').value;
-        const lines = inputText.split('\n');
-        const convertedLines = lines.map(line => `'${line.trim()}'`).filter(line => line !== "''");
+
+        // Split the input text by either new lines or commas, and remove extra spaces
+        const lines = inputText.split(/[\n,]+/).map(line => line.trim());
+
+        // Filter out empty lines and add single quotes
+        const convertedLines = lines.filter(line => line !== "").map(line => `'${line}'`);
+
+        // Join the converted lines with commas and new lines for formatting
         return convertedLines.join(',\n');
     }
+
 
     function saveToClipboard() {
         const convertedText = convertText();
