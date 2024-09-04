@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Replace Placeholder in Template</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+      resize: vertical;
+      margin-top: 8px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .output-section {
+      margin-top: 30px;
+    }
+
+    .output-section label {
+      color: #333;
+    }
+
+    .output-section textarea {
+      background-color: #f9f9f9;
+      color: #333;
+      height: 200px;
+    }
+  </style>
+  <script>
+    function replacePlaceholder() {
+      const template = document.getElementById('templateText').value;
+      const regionsInput = document.getElementById('regionsInput').value;
+
+      // Split the region names by commas or new lines, trim whitespace, and filter out empty strings
+      const regionNames = regionsInput.split(/[\n,]+/).map(region => region.trim()).filter(region => region !== "");
+
+      // Replace '###' with the region names and join them together
+      const result = regionNames.map(region => template.replace(/###/g, region)).join('\n\n');
+
+      // Output the result
+      document.getElementById('outputText').value = result;
+    }
+  </script>
+</head>
+<body>
+
+<div class="container">
+  <h1>Replace Placeholder in Template</h1>
+
+  <!-- Input Template -->
+  <label for="templateText">Template with Placeholder:</label>
+  <textarea id="templateText" rows="6" placeholder="Enter your template here...">SUM(CASE WHEN region_name = '###' THEN co_cnt ELSE 0 END) AS Pilbara_Surroundings_co_cnt,
+SUM(CASE WHEN region_name = '###' THEN incumbent_cnt ELSE 0 END) AS Pilbara_Surroundings_incumbent_cnt,</textarea>
+
+  <!-- Input for Regions -->
+  <label for="regionsInput">Regions (comma or newline separated):</label>
+  <textarea id="regionsInput" rows="3" placeholder="Enter region names like 'A, B' or 'A\nB'"></textarea>
+
+  <!-- Button to trigger the replacement -->
+  <button onclick="replacePlaceholder()">Generate SQL</button>
+
+  <!-- Output Section -->
+  <div class="output-section">
+    <label for="outputText">Generated SQL:</label>
+    <textarea id="outputText" readonly></textarea>
+  </div>
+</div>
+
+</body>
+</html>
