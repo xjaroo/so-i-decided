@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Excel Formula Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .editor-container {
+            max-width: 80%;
+            margin: 0 auto;
+        }
+        .editor {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            padding: 15px;
+            font-family: Consolas, monospace;
+            font-size: 16px;
+            color: #333;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            overflow-y: hidden;
+            outline: none;
+            min-height: 150px;
+        }
+        .editor:focus {
+            border-color: #0066cc;
+        }
+        .highlight {
+            color: #0066cc;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        #errorMessage.active {
+            display: block;
+        }
+        .match-highlight {
+            font-weight: bold;
+        }
+        .paren-color-1 { color: red; }
+        .paren-color-2 { color: orange; }
+        .paren-color-3 { color: yellow; }
+        .paren-color-4 { color: green; }
+        .paren-color-5 { color: blue; }
+        .paren-color-6 { color: purple; }
+        .generate-button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+            font-size: 12px;
+        }
+        table {
+            width: 50%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #cccccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>Dynamic Excel Formula Editor</h1>
+<div class="editor-container">
+    <div class="editor" contenteditable="true" id="formulaEditor">
+        =SUM(A1, A3)
+    </div>
+    <div id="errorMessage" class="error"></div>
+    <button class="generate-button" id="generateButton">Reformat & Copy</button>
+    <button class="generate-button" id="simulateButton">Simulate Formula</button>
+    <div id="formulaExplanation"></div>
+</div>
+
+<div id="resultTable"></div>
+
+<footer>&copy; 2024 Excel Formula Editor - All Rights Reserved</footer>
+
+<script>
+    // Utility function to generate random values for cell references like A1, B2
+    function generateCellValues(cells) {
+        let cellValues = {};
+        cells.forEach(cell => {
+            if (!cellValues[cell]) {
+                cellValues[cell] = Math.floor(Math.random() * 100) + 1;  // Random value between 1 and 100
+            }
+        });
+        return cellValues;
+    }
+
+    // Utility function to extract cell references from a formula (e.g., A1, A3, B2)
+    function extractCellReferences(formula) {
+        let regex = /([A-Za-z]{1,2}\d+)/g;
+        let matches = [...formula.matchAll(regex)].map(match => match[0]);
+        return matches;
+    }
+
+    // Utility function to place the cursor at the end of the contenteditable
+    function placeCaretAtEnd(el) {
+        el.focus();
+        if (typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+            var range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }
+
+    // Function to reformat the formula like a programming breakdown
+    function reformatFormula(formula) {
+        return formula.replace(/(\+|\-|\*|\/|,|\(|\))/g, '$1\n').replace(/\n+/g, '\n').trim();
+    }
+
+    // Function to add syntax highlighting
+    function highlightFormula(formula) {
+        const functions = ["SUM", "IF", "VLOOKUP", "INDEX", "MATCH", "COUNTIF", "AVERAGE"];
+        let highlighted = formula;
+
+        // Highlight functions
+        functions.forEach(fn => {
+            const regex = new RegExp(`\\b(${fn})\\b`, "g");
+            highlighted = highlighted.replace(regex, `<span class="highlight">${fn}</span>`);
+        });
+
+        // Highlight ranges (like A1:B2)
+        highlighted = highlighted.replace(/([A-Za-z]{1,2}\d+:[A-Za-z]{1,2}\d+)/g, `<span class="highlight">$1</span>`);
+
+        // Highlight single cell references (like A1)
+        highlighted = highlighted.replace(/([A-Za-z]{1,2}\d+)/g, `<span class="highlight">$1</span>`);
+
+        return highlighted;
+    }
+
+    // Function to match and highlight parentheses with rainbow colors
+    function highlightMatchingParenthesis(formula) {
+        const parenColors = ['paren-color-1', 'paren-color-2', 'paren-color-3', 'paren-color-4', 'paren-color-5', 'paren-color-6'];
+        let highlighted = '';
+        let openParenStack = [];
+
+        for (let i = 0; i < formula.length; i++) {
+            if (formula[i] === '(') {
+                const colorClass = parenColors[openParenStack.length % parenColors.length];
+                openParenStack.push(colorClass);
+                highlighted += `<span class="match-highlight ${colorClass}">${formula[i]}</span>`;
+            } else if (formula[i] === ')') {
+                const colorClass = openParenStack.pop() || 'paren-color-1';
+                highlighted += `<span class="match-highlight ${colorClass}">${formula[i]}</span>`;
+            } else {
+                highlighted += formula[i];
+            }
+        }
+
+        return highlighted;
+    }
+
+    // Parse and simulate Excel formula functionality
+    function simulateFormula(formula) {
+        const functions = {
+            SUM: sumFunction,
+            IF: ifFunction
+        };
+
+        const functionNameMatch = formula.match(/(\w+)\(/);
+        if (!functionNameMatch) return null;
+
+        const functionName = functionNameMatch[1].toUpperCase();
+        if (functions[functionName]) {
+            return functions[functionName](formula);
+        } else {
+            return `Function ${functionName} not supported.`;
+        }
+    }
+
+    // SUM function simulation
+    function sumFunction(formula) {
+        let sumRegex = /SUM\((.*?)\)/;
+        let match = formula.match(sumRegex);
+        let sum = 0;
+
+        if (match) {
+            let cells = match[1].split(',').map(cell => cell.trim());
+            let cellValues = generateCellValues(cells);
+
+            cells.forEach(cell => {
+                if (cellValues[cell] !== undefined) {
+                    sum += cellValues[cell];
+                }
+            });
+
+            // Return sum and generated cell values
+            return { result: sum, cellValues };
+        }
+
+        return { result: 0, cellValues: {} };
+    }
+
+    // IF function simulation
+    function ifFunction(formula) {
+        let ifRegex = /IF\((.*?),(.*?),(.*?)\)/;
+        let match = formula.match(ifRegex);
+
+        if (match) {
+            let condition = match[1].trim();
+            let trueValue = match[2].trim();
+            let falseValue = match[3].trim();
+
+            let cells = extractCellReferences(condition);
+            let cellValues = generateCellValues(cells);
+
+            let evaluatedCondition = evalCondition(condition, cellValues);
+            return { result: evaluatedCondition ? trueValue : falseValue, cellValues };
+        }
+        return { result: null, cellValues: {} };
+    }
+
+    // Simple condition evaluation for IF function
+    function evalCondition(condition, cellValues) {
+        let operators = ['>', '<', '>=', '<=', '=='];
+        for (let operator of operators) {
+            if (condition.includes(operator)) {
+                let [left, right] = condition.split(operator).map(val => val.trim());
+                left = isNaN(cellValues[left]) ? left : cellValues[left];
+                right = isNaN(right) ? right : parseFloat(right);
+                return eval(`${left} ${operator} ${right}`);
+            }
+        }
+        return false;
+    }
+
+    // Function to display table with cell values and the result
+    function displayTable(result, cellValues) {
+        const table = `
+            <table>
+                <tr>
+                    <th>Cell</th>
+                    <th>Value</th>
+                </tr>
+                ${Object.keys(cellValues).map(cell => `
+                    <tr>
+                        <td>${cell}</td>
+                        <td>${cellValues[cell]}</td>
+                    </tr>
+                `).join('')}
+                <tr>
+                    <td><strong>Result</strong></td>
+                    <td><strong>${result}</strong></td>
+                </tr>
+            </table>
+        `;
+        document.getElementById("resultTable").innerHTML = table;
+    }
+
+    // Auto-resize the contenteditable editor based on content
+    document.getElementById("formulaEditor").addEventListener("input", function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Event listener for the "Reformat & Copy" button
+    document.getElementById("generateButton").addEventListener("click", function () {
+        const editor = document.getElementById("formulaEditor");
+        let formula = editor.textContent;
+
+        // Reformat the formula (break it down)
+        let formattedFormula = reformatFormula(formula);
+
+        // Apply syntax and parentheses highlighting
+        formattedFormula = highlightFormula(formattedFormula);
+        formattedFormula = highlightMatchingParenthesis(formattedFormula);
+
+        // Display the reformatted and highlighted formula in the editor
+        editor.innerHTML = formattedFormula.replace(/\n/g, '<br>');
+
+        // Set cursor to the end of the content
+        placeCaretAtEnd(editor);
+
+        // Remove all new lines and extra spaces for copying
+        let cleanedFormula = formula.replace(/\n/g, '').replace(/\s+/g, ' ').trim();
+
+        // Copy cleaned formula to clipboard
+        navigator.clipboard.writeText(cleanedFormula).then(function () {
+            alert("Formula copied to clipboard!");
+        }).catch(function (err) {
+            console.error("Error copying to clipboard: ", err);
+        });
+    });
+
+    // Event listener for the "Simulate Formula" button
+    document.getElementById("simulateButton").addEventListener("click", function () {
+        const editor = document.getElementById("formulaEditor");
+        let formula = editor.textContent.trim();
+
+        // Simulate the formula
+        let { result, cellValues } = simulateFormula(formula);
+
+        // Display the table with values and result
+        displayTable(result, cellValues);
+    });
+</script>
+</body>
+</html>
