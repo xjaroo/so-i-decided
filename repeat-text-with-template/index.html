@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Replace Placeholder in Template</title>
+  <title>Replace Placeholder(###) in Template</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 80%;
       margin: 50px auto;
       background-color: #ffffff;
       padding: 20px;
@@ -84,29 +84,40 @@
 
       // Output the result
       document.getElementById('outputText').value = result;
+
+      // Copy the generated SQL to the clipboard
+      copyToClipboard(result);
+    }
+
+    function copyToClipboard(text) {
+      // Use the Clipboard API to copy the text
+      navigator.clipboard.writeText(text).then(function() {
+        alert('SQL copied to clipboard!');
+      }).catch(function(err) {
+        console.error('Error copying text: ', err);
+      });
     }
   </script>
 </head>
 <body>
 
 <div class="container">
-  <h1>Replace Placeholder in Template</h1>
+  <h1>Replace Pattern string in Template</h1>
 
   <!-- Input Template -->
-  <label for="templateText">Template with Placeholder:</label>
-  <textarea id="templateText" rows="6" placeholder="Enter your template here...">SUM(CASE WHEN region_name = '###' THEN co_cnt ELSE 0 END) AS Pilbara_Surroundings_co_cnt,
-SUM(CASE WHEN region_name = '###' THEN incumbent_cnt ELSE 0 END) AS Pilbara_Surroundings_incumbent_cnt,</textarea>
+  <label for="templateText">Template with Pattern string (###):</label>
+  <textarea id="templateText" rows="6" placeholder="Enter your template here..."></textarea>
 
   <!-- Input for Regions -->
-  <label for="regionsInput">Regions (comma or newline separated):</label>
-  <textarea id="regionsInput" rows="3" placeholder="Enter region names like 'A, B' or 'A\nB'"></textarea>
+  <label for="regionsInput">Values (comma or newline separated):</label>
+  <textarea id="regionsInput" rows="3" placeholder="Enter values like 'A, B' or 'A\nB'"></textarea>
 
   <!-- Button to trigger the replacement -->
-  <button onclick="replacePlaceholder()">Generate SQL</button>
+  <button onclick="replacePlaceholder()">Generate </button>
 
   <!-- Output Section -->
   <div class="output-section">
-    <label for="outputText">Generated SQL:</label>
+    <label for="outputText">Generated:</label>
     <textarea id="outputText" readonly></textarea>
   </div>
 </div>
