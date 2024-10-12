@@ -183,6 +183,7 @@
     // Game loop
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawWatermark(); // Draw the watermark first
         drawRandomObjects();
         updateEnemyTanks();
         updateEnemyBullets();
@@ -220,6 +221,16 @@
         handleKeyboardInput(); // Call keyboard input handling in the game loop
 
         requestAnimationFrame(gameLoop);
+    }
+
+    function drawWatermark() {
+        ctx.save();
+        ctx.globalAlpha = 0.2; // Set transparency for the watermark
+        ctx.fillStyle = "white";
+        ctx.font = "100px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("For Royce and Jace Hong", canvas.width / 2, canvas.height / 2); // Draw the watermark text
+        ctx.restore();
     }
 
     function drawRandomObjects() {
@@ -354,8 +365,9 @@
                     playerTank.y > bulletIcon.y - bulletIcon.size && playerTank.y < bulletIcon.y + bulletIcon.size;
 
                 if (hit) {
-                    maxBulletDistance += 100; // Increase bullet distance by 100 pixels
-                    bulletIcons.splice(index, 1); // Remove the bullet icon after it is collected
+                    maxPlayerBulletDistance += 100; // Increase bullet distance by 100 pixels
+                    bulletIcon.visible = false; // Mark the bullet icon as collected
+                    bulletIcons.splice(index, 1); // Safely remove the bullet icon from the array
                 }
             }
         });
@@ -597,12 +609,14 @@
     function handleKeyboardInput() {
         // Move forward (ArrowUp)
         if (keys.ArrowUp) {
-            playerTank.y -= playerTank.speed;
+            playerTank.x += Math.cos(playerTank.angle) * playerTank.speed; // Move in the direction the tank is facing
+            playerTank.y += Math.sin(playerTank.angle) * playerTank.speed; // Move in the direction the tank is facing
         }
 
         // Move backward (ArrowDown)
         if (keys.ArrowDown) {
-            playerTank.y += playerTank.speed;
+            playerTank.x -= Math.cos(playerTank.angle) * playerTank.speed; // Move in the opposite direction
+            playerTank.y -= Math.sin(playerTank.angle) * playerTank.speed; // Move in the opposite direction
         }
 
         // Rotate left (ArrowLeft)
