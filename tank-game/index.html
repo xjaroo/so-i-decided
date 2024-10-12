@@ -81,7 +81,7 @@
 
     // Create enemy tanks
     function generateEnemyTanks() {
-        const enemyCount = 5 + (stage - 1) * 2; // Increase number of enemies with each stage
+        const enemyCount = 2 + (stage - 1); // Start with 2 enemies and increase by 1 per stage
         for (let i = 0; i < enemyCount; i++) {
             enemyTanks.push({
                 x: Math.random() * canvas.width,
