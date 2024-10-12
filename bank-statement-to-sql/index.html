@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate SQL Insert Queries</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Generate SQL Insert Queries</h1>
+
+<textarea id="inputData" placeholder="Enter raw data here..."></textarea>
+<br>
+
+<button onclick="generateSQL()">Generate SQL Queries and Copy to Clipboard</button>
+
+<h2>Generated SQL Queries:</h2>
+<pre id="outputSQL"></pre>
+
+<script>
+    function convertDate(dateStr) {
+        const [day, month, year] = dateStr.split(' ');
+        const months = {
+            Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06',
+            Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+        };
+        return `20${year}-${months[month]}-${day.padStart(2, '0')}`;
+    }
+
+    function convertAmount(amountStr) {
+        // Remove commas and dollar sign, and convert to float
+        return parseFloat(amountStr.replace(/[$,]/g, ''));
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('SQL queries copied to clipboard!');
+        }, function(err) {
+            alert('Failed to copy to clipboard. ', err);
+        });
+    }
+
+    function generateSQL() {
+        const rawText = document.getElementById('inputData').value;
+        const rawEntries = rawText.split('\n').filter(line => line.trim() !== '');  // Split input by lines and filter empty lines
+        let queries = [];
+
+        rawEntries.forEach(entry => {
+            const parts = entry.trim().split(' ');
+            const amount = parts.pop();  // Last element is the amount
+            const tax_date = parts.slice(0, 3).join(' ');  // First three parts are the date
+            const item = parts.slice(3).join(' ');  // Rest is the item
+
+            const formattedDate = convertDate(tax_date);
+            const formattedAmount = convertAmount(amount);
+            const escapedItem = item.replace("'", "''");  // Escape single quotes
+
+            let query = `INSERT INTO tax (tax_date, item, amount) VALUES ('${formattedDate}', '${escapedItem}', ${formattedAmount});`;
+            queries.push(query);
+        });
+
+        const sqlQueries = queries.join('\n');
+        document.getElementById('outputSQL').textContent = sqlQueries;
+
+        // Copy the SQL queries to the clipboard
+        copyToClipboard(sqlQueries);
+    }
+</script>
+
+</body>
+</html>
