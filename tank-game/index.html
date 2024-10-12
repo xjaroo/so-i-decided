@@ -532,14 +532,17 @@
         }
     }
 
-    // Touch shooting (tap to shoot)
-    canvas.addEventListener('touchstart', (e) => {
+    // Touch shooting and direction control
+    canvas.addEventListener('touchmove', (e) => {
         const touchX = e.touches[0].clientX;
         const touchY = e.touches[0].clientY;
 
-        // Calculate angle to tap position
+        // Calculate angle to touch position
         playerTank.angle = Math.atan2(touchY - playerTank.y, touchX - playerTank.x); // Change tank direction
-        shootBullet(); // Shoot towards the tap
+    });
+
+    canvas.addEventListener('touchend', (e) => {
+        shootBullet(); // Shoot when the touch ends
     });
 
     // Keyboard controls
