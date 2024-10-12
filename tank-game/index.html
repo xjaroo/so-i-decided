@@ -259,14 +259,67 @@
         ctx.save();
         ctx.translate(playerTank.x, playerTank.y);
         ctx.rotate(playerTank.angle + Math.PI / 2);
-        ctx.fillStyle = "#4CAF50";
+
+        // Draw tracks
+        ctx.fillStyle = "#555"; // Dark gray color for tracks
+        ctx.fillRect(-playerTank.width / 2 - 5, -playerTank.height / 2, 10, playerTank.height); // Left track
+        ctx.fillRect(playerTank.width / 2 - 5, -playerTank.height / 2, 10, playerTank.height); // Right track
+
+        // Draw body with gradient
+        const bodyGradient = ctx.createLinearGradient(-playerTank.width / 2, 0, playerTank.width / 2, 0);
+        bodyGradient.addColorStop(0, "#4CAF50");
+        bodyGradient.addColorStop(1, "#81C784");
+        ctx.fillStyle = bodyGradient;
         ctx.fillRect(-playerTank.width / 2, -playerTank.height / 2, playerTank.width, playerTank.height);
+
+        // Draw turret
         ctx.beginPath();
         ctx.arc(0, 0, playerTank.width / 3, 0, Math.PI * 2);
         ctx.fillStyle = "#2E7D32";
         ctx.fill();
+
+        // Draw barrel
         ctx.fillStyle = "#1B5E20";
-        ctx.fillRect(-5, -playerTank.height / 2, 10, -playerTank.height / 2);
+        ctx.fillRect(-3, -playerTank.height / 2 - 20, 6, 20); // Extended barrel
+
+        // Draw details on the tank body
+        ctx.fillStyle = "#388E3C";
+        ctx.fillRect(-playerTank.width / 4, -playerTank.height / 4, playerTank.width / 2, playerTank.height / 2);
+
+        ctx.restore();
+    }
+
+    function drawEnemyTank(enemy) {
+        ctx.save();
+        ctx.translate(enemy.x, enemy.y);
+        ctx.rotate(enemy.angle + Math.PI / 2);
+
+        // Draw tracks
+        ctx.fillStyle = "#555"; // Dark gray color for tracks
+        ctx.fillRect(-enemy.width / 2 - 5, -enemy.height / 2, 10, enemy.height); // Left track
+        ctx.fillRect(enemy.width / 2 - 5, -enemy.height / 2, 10, enemy.height); // Right track
+
+        // Draw body with gradient
+        const bodyGradient = ctx.createLinearGradient(-enemy.width / 2, 0, enemy.width / 2, 0);
+        bodyGradient.addColorStop(0, "#E53935");
+        bodyGradient.addColorStop(1, "#EF5350");
+        ctx.fillStyle = bodyGradient;
+        ctx.fillRect(-enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
+
+        // Draw turret
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.width / 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#B71C1C";
+        ctx.fill();
+
+        // Draw barrel
+        ctx.fillStyle = "#8B0000"; // Dark red
+        ctx.fillRect(-3, -enemy.height / 2 - 15, 6, 15); // Extended barrel
+
+        // Draw details on the tank body
+        ctx.fillStyle = "#C62828";
+        ctx.fillRect(-enemy.width / 4, -enemy.height / 4, enemy.width / 2, enemy.height / 2);
+
         ctx.restore();
     }
 
@@ -380,12 +433,7 @@
             enemy.y += Math.sin(enemy.angle) * enemy.speed;
 
             // Draw enemy tank
-            ctx.save();
-            ctx.translate(enemy.x, enemy.y);
-            ctx.rotate(enemy.angle + Math.PI / 2);
-            ctx.fillStyle = "red";
-            ctx.fillRect(-enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
-            ctx.restore();
+            drawEnemyTank(enemy);
 
             // Randomly change direction
             if (Math.random() < 0.01) {
@@ -458,7 +506,7 @@
     }
 
     function shootBullet() {
-        const barrelLength = playerTank.height / 2;
+        const barrelLength = playerTank.height / 2 + 20; // Adjusted for extended barrel
         const bulletX = playerTank.x + Math.cos(playerTank.angle) * barrelLength;
         const bulletY = playerTank.y + Math.sin(playerTank.angle) * barrelLength;
 
@@ -475,10 +523,11 @@
         // Check bullet collisions with enemy tanks
         bullets.forEach((bullet, bulletIndex) => {
             enemyTanks.forEach((enemy, enemyIndex) => {
-                const hit = bullet.x > enemy.x - enemy.width / 2 && bullet.x < enemy.x + enemy.width / 2 &&
-                    bullet.y > enemy.y - enemy.height / 2 && bullet.y < enemy.y + enemy.height / 2;
+                const dx = bullet.x - enemy.x;
+                const dy = bullet.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
 
-                if (hit) {
+                if (distance < enemy.width / 2) {
                     // Remove bullet and enemy
                     bullets.splice(bulletIndex, 1);
                     enemyTanks.splice(enemyIndex, 1);
@@ -489,10 +538,11 @@
 
         // Check if enemy bullets hit the player
         enemyBullets.forEach((bullet, bulletIndex) => {
-            const hit = playerTank.x > bullet.x - 5 && playerTank.x < bullet.x + 5 &&
-                playerTank.y > bullet.y - 5 && playerTank.y < bullet.y + 5;
+            const dx = bullet.x - playerTank.x;
+            const dy = bullet.y - playerTank.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (hit) {
+            if (distance < playerTank.width / 2) {
                 // Reduce player energy
                 playerTank.energy -= 20;
                 enemyBullets.splice(bulletIndex, 1); // Remove the enemy bullet
@@ -513,8 +563,8 @@
     // Joystick handling
     const leftJoystick = document.getElementById("leftJoystick");
     const rightJoystick = document.getElementById("rightJoystick");
-    const leftJoystickKnob = document.getElementById("joystickKnob");
-    const rightJoystickKnob = document.getElementById("joystickKnob");
+    const leftJoystickKnob = leftJoystick.querySelector('#joystickKnob');
+    const rightJoystickKnob = rightJoystick.querySelector('#joystickKnob');
     let isDraggingLeft = false;
     let isDraggingRight = false;
 
@@ -571,9 +621,10 @@
         }
     });
 
-    rightJoystick.addEventListener('touchend', () => {
+    rightJoystick.addEventListener('touchend', (e) => {
         isDraggingRight = false;
         rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+        shootBullet(); // Shoot when the joystick is released
     });
 
     function updateRightJoystick(touch) {
@@ -591,11 +642,6 @@
             rightJoystickKnob.style.transform = `translate(${joystickX}px, ${joystickY}px)`; // Move knob
         }
     }
-
-    // Tap to shoot on right joystick
-    rightJoystick.addEventListener('touchend', (e) => {
-        shootBullet(); // Shoot when the joystick is tapped
-    });
 
     // Keyboard controls
     const keys = {
