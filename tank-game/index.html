@@ -36,7 +36,10 @@
         height: 60,
         angle: -Math.PI / 2, // Default angle pointing upwards
         speed: 2,
-        energy: 100 // Player's energy
+        energy: 100, // Player's energy
+        originalSpeed: 2, // Store original speed for later reset
+        speedBoostActive: false, // Track if speed boost is active
+        speedBoostDuration: 5000 // Duration of speed boost in milliseconds
     };
 
     const bullets = [];
@@ -44,10 +47,12 @@
     const trees = [];
     const enemyTanks = [];
     const enemyBullets = []; // Store enemy bullets
+    const shoes = []; // Array to store shoe icons
 
     let score = 0; // Player's score
     let stage = 1; // Current stage
-    const enemyBulletSpeed = 1; // Slower constant enemy bullet speed for all stages
+    const enemyBulletSpeed = 1; // Constant enemy bullet speed for all stages
+    const maxBulletDistance = 200; // Shortened maximum bullet length in pixels
 
     // Heart icon properties
     const heart = {
@@ -115,6 +120,18 @@
         }
     }
 
+    // Show shoe icon randomly
+    function showShoe() {
+        if (!playerTank.speedBoostActive) {
+            shoes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: 20,
+                visible: true
+            });
+        }
+    }
+
     // Game loop
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -129,7 +146,9 @@
         drawScore();
         drawStage();
         drawHeart(); // Draw heart icon
+        drawShoes(); // Draw shoe icons
         checkHeartCollision(); // Check for heart collision
+        checkShoeCollision(); // Check for shoe collision
 
         // Randomly show the heart based on timer
         if (heartTimer <= 0) {
@@ -137,6 +156,11 @@
             heartTimer = Math.random() * 5000 + 3000; // Reset timer (3-8 seconds)
         } else {
             heartTimer -= 16; // Decrease timer (approximately per frame)
+        }
+
+        // Show shoe icon at random intervals
+        if (Math.random() < 0.005) { // Adjust probability for shoe appearance
+            showShoe();
         }
 
         requestAnimationFrame(gameLoop);
@@ -208,6 +232,20 @@
         }
     }
 
+    function drawShoes() {
+        shoes.forEach(shoe => {
+            if (shoe.visible) {
+                ctx.fillStyle = "blue";
+                ctx.beginPath();
+                ctx.moveTo(shoe.x, shoe.y);
+                ctx.lineTo(shoe.x - shoe.size / 2, shoe.y + shoe.size / 2);
+                ctx.lineTo(shoe.x + shoe.size / 2, shoe.y + shoe.size / 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        });
+    }
+
     function checkHeartCollision() {
         if (heart.visible) {
             const hit = playerTank.x > heart.x - heart.size && playerTank.x < heart.x + heart.size &&
@@ -218,6 +256,28 @@
                 heart.visible = false; // Hide the heart after it is collected
             }
         }
+    }
+
+    function checkShoeCollision() {
+        shoes.forEach((shoe, index) => {
+            if (shoe.visible) {
+                const hit = playerTank.x > shoe.x - shoe.size && playerTank.x < shoe.x + shoe.size &&
+                    playerTank.y > shoe.y - shoe.size && playerTank.y < shoe.y + shoe.size;
+
+                if (hit) {
+                    playerTank.speed *= 1.5; // Increase player speed
+                    playerTank.speedBoostActive = true; // Activate speed boost
+
+                    // Reset speed after duration
+                    setTimeout(() => {
+                        playerTank.speed = playerTank.originalSpeed; // Reset to original speed
+                        playerTank.speedBoostActive = false; // Deactivate speed boost
+                    }, playerTank.speedBoostDuration);
+
+                    shoe.visible = false; // Hide the shoe after it is collected
+                }
+            }
+        });
     }
 
     function updateEnemyTanks() {
@@ -261,7 +321,8 @@
             x: bulletX,
             y: bulletY,
             angle: Math.atan2(playerTank.y - bulletY, playerTank.x - bulletX), // Aim at the player
-            speed: enemyBulletSpeed // Use constant bullet speed
+            speed: enemyBulletSpeed, // Use constant bullet speed
+            origin: { x: bulletX, y: bulletY } // Store the origin of the enemy bullet
         });
     }
 
@@ -270,15 +331,17 @@
             bullet.x += Math.cos(bullet.angle) * bullet.speed;
             bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
+            // Check if the bullet has exceeded its maximum length
+            const distanceTraveled = Math.sqrt((bullet.x - bullet.origin.x) ** 2 + (bullet.y - bullet.origin.y) ** 2);
+            if (distanceTraveled > maxBulletDistance) {
+                enemyBullets.splice(index, 1); // Remove bullet if it exceeds max distance
+                return; // Skip the rest of the loop
+            }
+
             ctx.beginPath();
             ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
             ctx.fillStyle = "orange";
             ctx.fill();
-
-            // Remove bullets if out of bounds
-            if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
-                enemyBullets.splice(index, 1);
-            }
         });
     }
 
@@ -287,15 +350,17 @@
             bullet.x += Math.cos(bullet.angle) * bullet.speed;
             bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
+            // Check if the bullet has exceeded its maximum length
+            const distanceTraveled = Math.sqrt((bullet.x - bullet.origin.x) ** 2 + (bullet.y - bullet.origin.y) ** 2);
+            if (distanceTraveled > maxBulletDistance) {
+                bullets.splice(index, 1); // Remove bullet if it exceeds max distance
+                return; // Skip the rest of the loop
+            }
+
             ctx.beginPath();
             ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
             ctx.fillStyle = "red";
             ctx.fill();
-
-            // Remove bullets if out of bounds
-            if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
-                bullets.splice(index, 1);
-            }
         });
     }
 
@@ -308,7 +373,8 @@
             x: bulletX,
             y: bulletY,
             angle: playerTank.angle,
-            speed: 5
+            speed: 5,
+            origin: { x: bulletX, y: bulletY } // Store the origin of the bullet
         });
     }
 
