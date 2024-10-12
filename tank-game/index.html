@@ -37,7 +37,21 @@
         #rightJoystick {
             right: 20px;
         }
-        #joystickKnob {
+
+        #leftJoystick, #rightJoystick {
+            /* Existing styles */
+            touch-action: none;  /* Add this line */
+        }
+
+        #leftJoystick {
+            z-index: 1000;  /* Ensure the left joystick is on top */
+        }
+
+        #rightJoystick {
+            z-index: 1000;  /* Ensure the right joystick is on top */
+        }
+
+        .joystickKnob {
             width: 50px;
             height: 50px;
             background-color: rgba(0, 0, 255, 0.7);
@@ -45,6 +59,7 @@
             position: absolute;
             pointer-events: none;
         }
+
         #versionInfo {
             position: absolute;
             top: 10px;
@@ -58,11 +73,12 @@
 <body>
 <canvas id="gameCanvas"></canvas>
 <div id="leftJoystick">
-    <div id="leftjoystickKnob"></div>
+    <div class="joystickKnob"></div>
 </div>
 <div id="rightJoystick">
-    <div id="rightjoystickKnob"></div>
+    <div class="joystickKnob"></div>
 </div>
+
 <div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
 <script>
     const canvas = document.getElementById("gameCanvas");
@@ -791,10 +807,12 @@
     // Joystick handling
     const leftJoystick = document.getElementById("leftJoystick");
     const rightJoystick = document.getElementById("rightJoystick");
-    const leftJoystickKnob = leftJoystick.querySelector('#leftJoystickKnob');
-    const rightJoystickKnob = rightJoystick.querySelector('#rightJoystickKnob');
+    const leftJoystickKnob = leftJoystick.querySelector('.joystickKnob');
+    const rightJoystickKnob = rightJoystick.querySelector('.joystickKnob');
+
     let isDraggingLeft = false;
     let isDraggingRight = false;
+
 
     // Left joystick controls
     leftJoystick.addEventListener('touchstart', (e) => {
@@ -802,14 +820,15 @@
         isDraggingLeft = true;
         const touch = e.touches[0];
         updateLeftJoystick(touch);
-    });
+    }, { passive: false });  // Add { passive: false }
 
     leftJoystick.addEventListener('touchmove', (e) => {
         if (isDraggingLeft) {
+            e.preventDefault();  // Add e.preventDefault()
             const touch = e.touches[0];
             updateLeftJoystick(touch);
         }
-    });
+    }, { passive: false });  // Add { passive: false }
 
     leftJoystick.addEventListener('touchend', () => {
         isDraggingLeft = false;
@@ -848,23 +867,23 @@
     rightJoystick.addEventListener('touchstart', (e) => {
         e.preventDefault();
         isDraggingRight = true;
-        isAutoShooting = true;  // Start auto-shooting when the joystick is engaged
+        isAutoShooting = true;
         const touch = e.touches[0];
         updateRightJoystick(touch);
-    });
+    }, { passive: false });
 
     rightJoystick.addEventListener('touchmove', (e) => {
         if (isDraggingRight) {
+            e.preventDefault();
             const touch = e.touches[0];
             updateRightJoystick(touch);
         }
-    });
+    }, { passive: false });
 
     rightJoystick.addEventListener('touchend', (e) => {
         isDraggingRight = false;
-        isAutoShooting = false;  // Stop auto-shooting when the joystick is released
+        isAutoShooting = false;
         rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
-        // Remove shootBullet(); since we're no longer shooting on touch release
     });
 
 
