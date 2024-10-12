@@ -47,7 +47,17 @@
 
     let score = 0; // Player's score
     let stage = 1; // Current stage
-    let enemyBulletSpeed = 2; // Starting speed of enemy bullets
+    const enemyBulletSpeed = 2; // Constant enemy bullet speed for all stages
+
+    // Heart icon properties
+    const heart = {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 20,
+        visible: false
+    };
+
+    let heartTimer; // Timer for heart appearance
 
     // Track keyboard input
     const keys = {
@@ -96,6 +106,15 @@
         }
     }
 
+    // Show heart icon randomly
+    function showHeart() {
+        if (playerTank.energy < 50) {
+            heart.visible = true;
+            heart.x = Math.random() * canvas.width;
+            heart.y = Math.random() * canvas.height;
+        }
+    }
+
     // Game loop
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -109,6 +128,17 @@
         drawEnergy();
         drawScore();
         drawStage();
+        drawHeart(); // Draw heart icon
+        checkHeartCollision(); // Check for heart collision
+
+        // Randomly show the heart based on timer
+        if (heartTimer <= 0) {
+            showHeart();
+            heartTimer = Math.random() * 5000 + 3000; // Reset timer (3-8 seconds)
+        } else {
+            heartTimer -= 16; // Decrease timer (approximately per frame)
+        }
+
         requestAnimationFrame(gameLoop);
     }
 
@@ -167,6 +197,29 @@
         ctx.fillText(`Stage: ${stage}`, 10, 80);
     }
 
+    function drawHeart() {
+        if (heart.visible) {
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.moveTo(heart.x, heart.y);
+            ctx.bezierCurveTo(heart.x - heart.size / 2, heart.y - heart.size / 2, heart.x - heart.size, heart.y + heart.size / 4, heart.x, heart.y + heart.size);
+            ctx.bezierCurveTo(heart.x + heart.size, heart.y + heart.size / 4, heart.x + heart.size / 2, heart.y - heart.size / 2, heart.x, heart.y);
+            ctx.fill();
+        }
+    }
+
+    function checkHeartCollision() {
+        if (heart.visible) {
+            const hit = playerTank.x > heart.x - heart.size && playerTank.x < heart.x + heart.size &&
+                playerTank.y > heart.y - heart.size && playerTank.y < heart.y + heart.size;
+
+            if (hit) {
+                playerTank.energy = 100; // Restore energy to full
+                heart.visible = false; // Hide the heart after it is collected
+            }
+        }
+    }
+
     function updateEnemyTanks() {
         enemyTanks.forEach((enemy, index) => {
             // Move enemy tank
@@ -208,7 +261,7 @@
             x: bulletX,
             y: bulletY,
             angle: Math.atan2(playerTank.y - bulletY, playerTank.x - bulletX), // Aim at the player
-            speed: enemyBulletSpeed // Set bullet speed based on current stage
+            speed: enemyBulletSpeed // Use constant bullet speed
         });
     }
 
@@ -294,7 +347,6 @@
         // Check for stage progression
         if (enemyTanks.length === 0) {
             stage++;
-            enemyBulletSpeed += 1; // Increase enemy bullet speed with each stage
             generateEnemyTanks(); // Regenerate enemy tanks for the next stage
         }
     }
@@ -343,6 +395,7 @@
 
     generateRandomObjects(); // Generate grass and trees
     generateEnemyTanks(); // Generate enemy tanks
+    heartTimer = Math.random() * 5000 + 3000; // Initial random timer for heart appearance
     gameLoop(); // Start the game loop
 </script>
 </body>
