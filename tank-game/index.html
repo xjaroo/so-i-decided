@@ -18,44 +18,46 @@
             width: 100vw;
             height: 100vh;
         }
-        .button {
+        #joystick {
             position: absolute;
+            bottom: 60px;
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #000;
+            pointer-events: auto;
+        }
+        #joystickKnob {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 0, 255, 0.7);
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+        }
+        #shootButton {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
             background: rgba(255, 255, 255, 0.7);
             border: 1px solid #000;
             border-radius: 5px;
             padding: 10px;
             cursor: pointer;
         }
-        #upButton {
-            bottom: 100px;
-            left: 20px;
-        }
-        #downButton {
-            bottom: 40px;
-            left: 20px;
-        }
-        #leftButton {
-            bottom: 70px;
-            left: 20px;
-        }
-        #rightButton {
-            bottom: 70px;
-            left: 100px;
-        }
-        #shootButton {
-            bottom: 20px;
-            left: 20px;
-            width: 100px;
-        }
     </style>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
-<div id="upButton" class="button">Up</div>
-<div id="downButton" class="button">Down</div>
-<div id="leftButton" class="button">Left</div>
-<div id="rightButton" class="button">Right</div>
-<div id="shootButton" class="button">Shoot</div>
+<div id="joystick">
+    <div id="joystickKnob"></div>
+</div>
+<div id="shootButton">Shoot</div>
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -486,44 +488,51 @@
         }
     }
 
-    // Touch control handling
-    document.getElementById("upButton").addEventListener('touchstart', () => {
-        playerTank.y -= playerTank.speed;
+    // Joystick handling
+    const joystick = document.getElementById("joystick");
+    const joystickKnob = document.getElementById("joystickKnob");
+    let isDragging = false;
+
+    joystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDragging = true;
+        const touch = e.touches[0];
+        updateJoystick(touch);
     });
 
-    document.getElementById("downButton").addEventListener('touchstart', () => {
-        playerTank.y += playerTank.speed;
+    joystick.addEventListener('touchmove', (e) => {
+        if (isDragging) {
+            const touch = e.touches[0];
+            updateJoystick(touch);
+        }
     });
 
-    document.getElementById("leftButton").addEventListener('touchstart', () => {
-        playerTank.angle -= 0.05;
+    joystick.addEventListener('touchend', () => {
+        isDragging = false;
+        joystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
     });
 
-    document.getElementById("rightButton").addEventListener('touchstart', () => {
-        playerTank.angle += 0.05;
-    });
+    function updateJoystick(touch) {
+        const joystickX = touch.clientX - joystick.getBoundingClientRect().left - joystick.clientWidth / 2;
+        const joystickY = touch.clientY - joystick.getBoundingClientRect().top - joystick.clientHeight / 2;
+        const distance = Math.sqrt(joystickX ** 2 + joystickY ** 2);
 
+        // Cap the joystick movement
+        if (distance > 40) { // Radius of joystick
+            const angle = Math.atan2(joystickY, joystickX);
+            playerTank.x += Math.cos(angle) * playerTank.speed;
+            playerTank.y += Math.sin(angle) * playerTank.speed;
+            joystickKnob.style.transform = `translate(${Math.cos(angle) * 40}px, ${Math.sin(angle) * 40}px)`; // Move knob
+        } else {
+            playerTank.x += joystickX * 0.05; // Control speed sensitivity
+            playerTank.y += joystickY * 0.05; // Control speed sensitivity
+            joystickKnob.style.transform = `translate(${joystickX}px, ${joystickY}px)`; // Move knob
+        }
+    }
+
+    // Shoot button
     document.getElementById("shootButton").addEventListener('touchstart', () => {
         shootBullet(); // Shoot when the button is pressed
-    });
-
-    // To prevent touch end events from firing too rapidly
-    document.querySelectorAll('.button').forEach(button => {
-        button.addEventListener('touchend', (e) => {
-            e.preventDefault(); // Prevent default touch end behavior
-        });
-    });
-
-    window.addEventListener("keydown", (e) => {
-        if (e.code in keys) {
-            keys[e.code] = true;
-        }
-    });
-
-    window.addEventListener("keyup", (e) => {
-        if (e.code in keys) {
-            keys[e.code] = false;
-        }
     });
 
     generateRandomObjects(); // Generate grass and trees
