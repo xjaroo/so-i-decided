@@ -290,9 +290,9 @@
         ctx.rotate(playerTank.angle + Math.PI / 2);
 
         // Draw tracks
-        ctx.fillStyle = "#555"; // Dark gray color for tracks
-        ctx.fillRect(-playerTank.width / 2 - 5, -playerTank.height / 2, 10, playerTank.height); // Left track
-        ctx.fillRect(playerTank.width / 2 - 5, -playerTank.height / 2, 10, playerTank.height); // Right track
+        ctx.fillStyle = "#555";
+        ctx.fillRect(-playerTank.width / 2 - 5, -playerTank.height / 2, 10, playerTank.height);
+        ctx.fillRect(playerTank.width / 2 - 5, -playerTank.height / 2, 10, playerTank.height);
 
         // Draw body with gradient
         const bodyGradient = ctx.createLinearGradient(-playerTank.width / 2, 0, playerTank.width / 2, 0);
@@ -301,22 +301,41 @@
         ctx.fillStyle = bodyGradient;
         ctx.fillRect(-playerTank.width / 2, -playerTank.height / 2, playerTank.width, playerTank.height);
 
-        // Draw turret
+        // Draw turret and barrel
         ctx.beginPath();
         ctx.arc(0, 0, playerTank.width / 3, 0, Math.PI * 2);
         ctx.fillStyle = "#2E7D32";
         ctx.fill();
-
-        // Draw barrel
         ctx.fillStyle = "#1B5E20";
-        ctx.fillRect(-3, -playerTank.height / 2 - 20, 6, 20); // Extended barrel
+        ctx.fillRect(-3, -playerTank.height / 2 - 20, 6, 20);
 
         // Draw details on the tank body
         ctx.fillStyle = "#388E3C";
         ctx.fillRect(-playerTank.width / 4, -playerTank.height / 4, playerTank.width / 2, playerTank.height / 2);
 
         ctx.restore();
+
+        // **Draw player's energy bar above the tank**
+        const energyBarWidth = 50;  // Width of the energy bar
+        const energyBarHeight = 5;  // Height of the energy bar
+
+        // Calculate the position above the tank
+        const barX = playerTank.x - energyBarWidth / 2;
+        const barY = playerTank.y - playerTank.height / 2 - 20;  // Adjust as needed
+
+        // Draw the background of the energy bar
+        ctx.fillStyle = "gray";
+        ctx.fillRect(barX, barY, energyBarWidth, energyBarHeight);
+
+        // Draw the current energy level
+        ctx.fillStyle = "limegreen";
+        ctx.fillRect(barX, barY, energyBarWidth * (playerTank.energy / 100), energyBarHeight);
+
+        // Draw the border of the energy bar
+        ctx.strokeStyle = "black";
+        ctx.strokeRect(barX, barY, energyBarWidth, energyBarHeight);
     }
+
 
     function drawEnemyTank(enemy) {
         ctx.save();
