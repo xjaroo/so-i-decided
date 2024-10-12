@@ -101,6 +101,11 @@
     const enemyBosses = []; // Array to store multiple bosses
 
 
+    let isAutoShooting = false;       // Flag to track if auto-shooting is active
+    let autoShootTimer = 0;           // Timer to manage shooting intervals
+    const autoShootInterval = 500;    // Interval between shots in milliseconds (adjust as needed)
+
+
     // Heart icon properties
     const heart = {
         x: Math.random() * canvas.width,
@@ -248,6 +253,17 @@
         }
 
         handleKeyboardInput(); // Call keyboard input handling in the game loop
+
+        // **Auto-shooting logic**
+        if (isAutoShooting) {
+            autoShootTimer += deltaTime;
+            if (autoShootTimer >= autoShootInterval) {
+                shootBullet();
+                autoShootTimer = 0;  // Reset the timer after shooting
+            }
+        } else {
+            autoShootTimer = 0;  // Reset the timer when not auto-shooting
+        }
 
         requestAnimationFrame(gameLoop);
     }
@@ -832,6 +848,7 @@
     rightJoystick.addEventListener('touchstart', (e) => {
         e.preventDefault();
         isDraggingRight = true;
+        isAutoShooting = true;  // Start auto-shooting when the joystick is engaged
         const touch = e.touches[0];
         updateRightJoystick(touch);
     });
@@ -845,9 +862,11 @@
 
     rightJoystick.addEventListener('touchend', (e) => {
         isDraggingRight = false;
+        isAutoShooting = false;  // Stop auto-shooting when the joystick is released
         rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
-        shootBullet(); // Shoot when the joystick is released
+        // Remove shootBullet(); since we're no longer shooting on touch release
     });
+
 
     function updateRightJoystick(touch) {
         const joystickX = touch.clientX - rightJoystick.getBoundingClientRect().left - rightJoystick.clientWidth / 2;
