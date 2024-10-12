@@ -48,11 +48,12 @@
     const enemyTanks = [];
     const enemyBullets = []; // Store enemy bullets
     const shoes = []; // Array to store shoe icons
+    const bulletIcons = []; // Array to store bullet icons
 
     let score = 0; // Player's score
     let stage = 1; // Current stage
     const enemyBulletSpeed = 1; // Constant enemy bullet speed for all stages
-    const maxBulletDistance = 200; // Shortened maximum bullet length in pixels
+    let maxBulletDistance = 200; // Shortened maximum bullet length in pixels
 
     // Heart icon properties
     const heart = {
@@ -122,8 +123,20 @@
 
     // Show shoe icon randomly
     function showShoe() {
-        if (!playerTank.speedBoostActive) {
+        if (!playerTank.speedBoostActive && shoes.length < 1) { // Limit to one shoe at a time
             shoes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: 20,
+                visible: true
+            });
+        }
+    }
+
+    // Show bullet icon randomly
+    function showBulletIcon() {
+        if (bulletIcons.length < 1) { // Limit to one bullet icon at a time
+            bulletIcons.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
                 size: 20,
@@ -147,8 +160,10 @@
         drawStage();
         drawHeart(); // Draw heart icon
         drawShoes(); // Draw shoe icons
+        drawBulletIcons(); // Draw bullet icons
         checkHeartCollision(); // Check for heart collision
         checkShoeCollision(); // Check for shoe collision
+        checkBulletIconCollision(); // Check for bullet icon collision
 
         // Randomly show the heart based on timer
         if (heartTimer <= 0) {
@@ -158,9 +173,14 @@
             heartTimer -= 16; // Decrease timer (approximately per frame)
         }
 
-        // Show shoe icon at random intervals
-        if (Math.random() < 0.005) { // Adjust probability for shoe appearance
+        // Show shoe icon at random intervals (less frequently)
+        if (Math.random() < 0.001) { // Adjusted probability for shoe appearance
             showShoe();
+        }
+
+        // Show bullet icon at random intervals (less frequently)
+        if (Math.random() < 0.001) { // Adjusted probability for bullet icon appearance
+            showBulletIcon();
         }
 
         requestAnimationFrame(gameLoop);
@@ -246,6 +266,17 @@
         });
     }
 
+    function drawBulletIcons() {
+        bulletIcons.forEach(bulletIcon => {
+            if (bulletIcon.visible) {
+                ctx.fillStyle = "yellow";
+                ctx.beginPath();
+                ctx.arc(bulletIcon.x, bulletIcon.y, bulletIcon.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+    }
+
     function checkHeartCollision() {
         if (heart.visible) {
             const hit = playerTank.x > heart.x - heart.size && playerTank.x < heart.x + heart.size &&
@@ -275,6 +306,20 @@
                     }, playerTank.speedBoostDuration);
 
                     shoe.visible = false; // Hide the shoe after it is collected
+                }
+            }
+        });
+    }
+
+    function checkBulletIconCollision() {
+        bulletIcons.forEach((bulletIcon, index) => {
+            if (bulletIcon.visible) {
+                const hit = playerTank.x > bulletIcon.x - bulletIcon.size && playerTank.x < bulletIcon.x + bulletIcon.size &&
+                    playerTank.y > bulletIcon.y - bulletIcon.size && playerTank.y < bulletIcon.y + bulletIcon.size;
+
+                if (hit) {
+                    maxBulletDistance += 100; // Increase bullet distance by 100 pixels
+                    bulletIcons.splice(index, 1); // Remove the bullet icon after it is collected
                 }
             }
         });
