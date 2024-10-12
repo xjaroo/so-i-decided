@@ -492,6 +492,38 @@
         }
     }
 
+    // Touch control handling
+    let touchStartX, touchStartY, touchEndX, touchEndY;
+
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent scrolling
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault(); // Prevent scrolling
+        const touch = e.touches[0];
+        touchEndX = touch.clientX;
+        touchEndY = touch.clientY;
+
+        // Calculate the movement direction
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        // Move the tank based on touch direction
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            playerTank.angle += deltaX > 0 ? 0.05 : -0.05; // Rotate left or right
+        } else {
+            playerTank.y += deltaY > 0 ? playerTank.speed : -playerTank.speed; // Move up or down
+        }
+    });
+
+    canvas.addEventListener('touchend', () => {
+        shootBullet(); // Shoot when the touch ends
+    });
+
     window.addEventListener("keydown", (e) => {
         if (e.code in keys) {
             keys[e.code] = true;
