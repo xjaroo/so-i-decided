@@ -30,6 +30,7 @@
             align-items: center;
             border: 2px solid #000;
             pointer-events: auto;
+            touch-action: none;  /* Add this line */
         }
         #leftJoystick {
             left: 20px;
@@ -38,10 +39,7 @@
             right: 20px;
         }
 
-        #leftJoystick, #rightJoystick {
-            /* Existing styles */
-            touch-action: none;  /* Add this line */
-        }
+
 
         #leftJoystick {
             z-index: 1000;  /* Ensure the left joystick is on top */
@@ -120,6 +118,10 @@
     let isAutoShooting = false;       // Flag to track if auto-shooting is active
     let autoShootTimer = 0;           // Timer to manage shooting intervals
     const autoShootInterval = 500;    // Interval between shots in milliseconds (adjust as needed)
+
+
+    let leftJoystickTouchId = null;
+    let rightJoystickTouchId = null;
 
 
     // Heart icon properties
@@ -817,23 +819,32 @@
     // Left joystick controls
     leftJoystick.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        isDraggingLeft = true;
-        const touch = e.touches[0];
+        const touch = e.changedTouches[0];
+        leftJoystickTouchId = touch.identifier;
         updateLeftJoystick(touch);
-    }, { passive: false });  // Add { passive: false }
+    }, { passive: false });
 
     leftJoystick.addEventListener('touchmove', (e) => {
-        if (isDraggingLeft) {
-            e.preventDefault();  // Add e.preventDefault()
-            const touch = e.touches[0];
-            updateLeftJoystick(touch);
+        e.preventDefault();
+        for (let touch of e.changedTouches) {
+            if (touch.identifier === leftJoystickTouchId) {
+                updateLeftJoystick(touch);
+                break;
+            }
         }
-    }, { passive: false });  // Add { passive: false }
+    }, { passive: false });
 
-    leftJoystick.addEventListener('touchend', () => {
-        isDraggingLeft = false;
-        leftJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
-    });
+    leftJoystick.addEventListener('touchend', (e) => {
+        for (let touch of e.changedTouches) {
+            if (touch.identifier === leftJoystickTouchId) {
+                isDraggingLeft = false;
+                leftJoystickTouchId = null;
+                leftJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+                break;
+            }
+        }
+    }, { passive: false });
+
 
     function updateLeftJoystick(touch) {
         const joystickX = touch.clientX - leftJoystick.getBoundingClientRect().left - leftJoystick.clientWidth / 2;
@@ -866,25 +877,34 @@
     // Right joystick controls
     rightJoystick.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        isDraggingRight = true;
+        const touch = e.changedTouches[0];
+        rightJoystickTouchId = touch.identifier;
         isAutoShooting = true;
-        const touch = e.touches[0];
         updateRightJoystick(touch);
     }, { passive: false });
 
     rightJoystick.addEventListener('touchmove', (e) => {
-        if (isDraggingRight) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            updateRightJoystick(touch);
+        e.preventDefault();
+        for (let touch of e.changedTouches) {
+            if (touch.identifier === rightJoystickTouchId) {
+                updateRightJoystick(touch);
+                break;
+            }
         }
     }, { passive: false });
 
     rightJoystick.addEventListener('touchend', (e) => {
-        isDraggingRight = false;
-        isAutoShooting = false;
-        rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
-    });
+        for (let touch of e.changedTouches) {
+            if (touch.identifier === rightJoystickTouchId) {
+                isDraggingRight = false;
+                isAutoShooting = false;
+                rightJoystickTouchId = null;
+                rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+                break;
+            }
+        }
+    }, { passive: false });
+
 
 
     function updateRightJoystick(touch) {
