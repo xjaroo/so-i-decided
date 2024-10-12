@@ -18,10 +18,9 @@
             width: 100vw;
             height: 100vh;
         }
-        #joystick {
+        #leftJoystick, #rightJoystick {
             position: absolute;
             bottom: 60px;
-            left: 20px;
             width: 100px;
             height: 100px;
             background-color: rgba(255, 255, 255, 0.5);
@@ -31,6 +30,12 @@
             align-items: center;
             border: 2px solid #000;
             pointer-events: auto;
+        }
+        #leftJoystick {
+            left: 20px;
+        }
+        #rightJoystick {
+            right: 20px;
         }
         #joystickKnob {
             width: 50px;
@@ -52,7 +57,10 @@
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
-<div id="joystick">
+<div id="leftJoystick">
+    <div id="joystickKnob"></div>
+</div>
+<div id="rightJoystick">
     <div id="joystickKnob"></div>
 </div>
 <div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
@@ -491,32 +499,36 @@
     }
 
     // Joystick handling
-    const joystick = document.getElementById("joystick");
-    const joystickKnob = document.getElementById("joystickKnob");
-    let isDragging = false;
+    const leftJoystick = document.getElementById("leftJoystick");
+    const rightJoystick = document.getElementById("rightJoystick");
+    const leftJoystickKnob = document.getElementById("joystickKnob");
+    const rightJoystickKnob = document.getElementById("joystickKnob");
+    let isDraggingLeft = false;
+    let isDraggingRight = false;
 
-    joystick.addEventListener('touchstart', (e) => {
+    // Left joystick controls
+    leftJoystick.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        isDragging = true;
+        isDraggingLeft = true;
         const touch = e.touches[0];
-        updateJoystick(touch);
+        updateLeftJoystick(touch);
     });
 
-    joystick.addEventListener('touchmove', (e) => {
-        if (isDragging) {
+    leftJoystick.addEventListener('touchmove', (e) => {
+        if (isDraggingLeft) {
             const touch = e.touches[0];
-            updateJoystick(touch);
+            updateLeftJoystick(touch);
         }
     });
 
-    joystick.addEventListener('touchend', () => {
-        isDragging = false;
-        joystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+    leftJoystick.addEventListener('touchend', () => {
+        isDraggingLeft = false;
+        leftJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
     });
 
-    function updateJoystick(touch) {
-        const joystickX = touch.clientX - joystick.getBoundingClientRect().left - joystick.clientWidth / 2;
-        const joystickY = touch.clientY - joystick.getBoundingClientRect().top - joystick.clientHeight / 2;
+    function updateLeftJoystick(touch) {
+        const joystickX = touch.clientX - leftJoystick.getBoundingClientRect().left - leftJoystick.clientWidth / 2;
+        const joystickY = touch.clientY - leftJoystick.getBoundingClientRect().top - leftJoystick.clientHeight / 2;
         const distance = Math.sqrt(joystickX ** 2 + joystickY ** 2);
 
         // Cap the joystick movement
@@ -524,25 +536,53 @@
             const angle = Math.atan2(joystickY, joystickX);
             playerTank.x += Math.cos(angle) * playerTank.speed;
             playerTank.y += Math.sin(angle) * playerTank.speed;
-            joystickKnob.style.transform = `translate(${Math.cos(angle) * 40}px, ${Math.sin(angle) * 40}px)`; // Move knob
+            leftJoystickKnob.style.transform = `translate(${Math.cos(angle) * 40}px, ${Math.sin(angle) * 40}px)`; // Move knob
         } else {
             playerTank.x += joystickX * 0.05; // Control speed sensitivity
             playerTank.y += joystickY * 0.05; // Control speed sensitivity
-            joystickKnob.style.transform = `translate(${joystickX}px, ${joystickY}px)`; // Move knob
+            leftJoystickKnob.style.transform = `translate(${joystickX}px, ${joystickY}px)`; // Move knob
         }
     }
 
-    // Touch shooting and direction control
-    canvas.addEventListener('touchmove', (e) => {
-        const touchX = e.touches[0].clientX;
-        const touchY = e.touches[0].clientY;
-
-        // Calculate angle to touch position
-        playerTank.angle = Math.atan2(touchY - playerTank.y, touchX - playerTank.x); // Change tank direction
+    // Right joystick controls
+    rightJoystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDraggingRight = true;
+        const touch = e.touches[0];
+        updateRightJoystick(touch);
     });
 
-    canvas.addEventListener('touchend', (e) => {
-        shootBullet(); // Shoot when the touch ends
+    rightJoystick.addEventListener('touchmove', (e) => {
+        if (isDraggingRight) {
+            const touch = e.touches[0];
+            updateRightJoystick(touch);
+        }
+    });
+
+    rightJoystick.addEventListener('touchend', () => {
+        isDraggingRight = false;
+        rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+    });
+
+    function updateRightJoystick(touch) {
+        const joystickX = touch.clientX - rightJoystick.getBoundingClientRect().left - rightJoystick.clientWidth / 2;
+        const joystickY = touch.clientY - rightJoystick.getBoundingClientRect().top - rightJoystick.clientHeight / 2;
+        const distance = Math.sqrt(joystickX ** 2 + joystickY ** 2);
+
+        // Cap the joystick movement
+        if (distance > 40) { // Radius of joystick
+            const angle = Math.atan2(joystickY, joystickX);
+            playerTank.angle = angle; // Update tank angle based on joystick direction
+            rightJoystickKnob.style.transform = `translate(${Math.cos(angle) * 40}px, ${Math.sin(angle) * 40}px)`; // Move knob
+        } else {
+            playerTank.angle = Math.atan2(joystickY, joystickX); // Update angle based on joystick position
+            rightJoystickKnob.style.transform = `translate(${joystickX}px, ${joystickY}px)`; // Move knob
+        }
+    }
+
+    // Tap to shoot on right joystick
+    rightJoystick.addEventListener('touchend', (e) => {
+        shootBullet(); // Shoot when the joystick is tapped
     });
 
     // Keyboard controls
