@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tank Game v0.1.0</title>
+    <title>Tank Game</title>
     <style>
         body, html {
             margin: 0;
@@ -50,6 +50,14 @@
             padding: 10px;
             cursor: pointer;
         }
+        #versionInfo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000; /* Ensure it appears above other elements */
+        }
     </style>
 </head>
 <body>
@@ -58,6 +66,7 @@
     <div id="joystickKnob"></div>
 </div>
 <div id="shootButton">Shoot</div>
+<div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -88,8 +97,10 @@
 
     let score = 0; // Player's score
     let stage = 1; // Current stage
-    const enemyBulletSpeed = 1; // Constant enemy bullet speed for all stages
-    let maxBulletDistance = 200; // Shortened maximum bullet length in pixels
+    const playerBulletSpeed = 5; // Player bullet speed
+    const enemyBulletSpeed = 2; // Enemy bullet speed
+    const maxPlayerBulletDistance = 400; // Player's maximum bullet distance
+    const maxEnemyBulletDistance = 200; // Enemy's maximum bullet distance
 
     // Heart icon properties
     const heart = {
@@ -208,6 +219,8 @@
         if (Math.random() < 0.001) { // Adjusted probability for bullet icon appearance
             showBulletIcon();
         }
+
+        handleKeyboardInput(); // Call keyboard input handling in the game loop
 
         requestAnimationFrame(gameLoop);
     }
@@ -404,7 +417,7 @@
 
             // Check if the bullet has exceeded its maximum length
             const distanceTraveled = Math.sqrt((bullet.x - bullet.origin.x) ** 2 + (bullet.y - bullet.origin.y) ** 2);
-            if (distanceTraveled > maxBulletDistance) {
+            if (distanceTraveled > maxEnemyBulletDistance) {
                 enemyBullets.splice(index, 1); // Remove bullet if it exceeds max distance
                 return; // Skip the rest of the loop
             }
@@ -418,12 +431,12 @@
 
     function updateBullets() {
         bullets.forEach((bullet, index) => {
-            bullet.x += Math.cos(bullet.angle) * bullet.speed;
-            bullet.y += Math.sin(bullet.angle) * bullet.speed;
+            bullet.x += Math.cos(bullet.angle) * playerBulletSpeed;
+            bullet.y += Math.sin(bullet.angle) * playerBulletSpeed;
 
             // Check if the bullet has exceeded its maximum length
             const distanceTraveled = Math.sqrt((bullet.x - bullet.origin.x) ** 2 + (bullet.y - bullet.origin.y) ** 2);
-            if (distanceTraveled > maxBulletDistance) {
+            if (distanceTraveled > maxPlayerBulletDistance) {
                 bullets.splice(index, 1); // Remove bullet if it exceeds max distance
                 return; // Skip the rest of the loop
             }
@@ -444,7 +457,7 @@
             x: bulletX,
             y: bulletY,
             angle: playerTank.angle,
-            speed: 5,
+            speed: playerBulletSpeed,
             origin: { x: bulletX, y: bulletY } // Store the origin of the bullet
         });
     }
@@ -533,6 +546,55 @@
     // Shoot button
     document.getElementById("shootButton").addEventListener('touchstart', () => {
         shootBullet(); // Shoot when the button is pressed
+    });
+
+    // Keyboard controls
+    const keys = {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false,
+        Space: false
+    };
+
+    function handleKeyboardInput() {
+        // Move forward (ArrowUp)
+        if (keys.ArrowUp) {
+            playerTank.y -= playerTank.speed;
+        }
+
+        // Move backward (ArrowDown)
+        if (keys.ArrowDown) {
+            playerTank.y += playerTank.speed;
+        }
+
+        // Rotate left (ArrowLeft)
+        if (keys.ArrowLeft) {
+            playerTank.angle -= 0.05;
+        }
+
+        // Rotate right (ArrowRight)
+        if (keys.ArrowRight) {
+            playerTank.angle += 0.05;
+        }
+
+        // Shoot bullet (Space)
+        if (keys.Space) {
+            shootBullet();
+            keys.Space = false; // Prevent continuous shooting
+        }
+    }
+
+    window.addEventListener("keydown", (e) => {
+        if (e.code in keys) {
+            keys[e.code] = true;
+        }
+    });
+
+    window.addEventListener("keyup", (e) => {
+        if (e.code in keys) {
+            keys[e.code] = false;
+        }
     });
 
     generateRandomObjects(); // Generate grass and trees
