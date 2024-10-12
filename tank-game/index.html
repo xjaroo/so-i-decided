@@ -58,10 +58,10 @@
 <body>
 <canvas id="gameCanvas"></canvas>
 <div id="leftJoystick">
-    <div id="joystickKnob"></div>
+    <div id="leftjoystickKnob"></div>
 </div>
 <div id="rightJoystick">
-    <div id="joystickKnob"></div>
+    <div id="rightjoystickKnob"></div>
 </div>
 <div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
 <script>
@@ -775,8 +775,8 @@
     // Joystick handling
     const leftJoystick = document.getElementById("leftJoystick");
     const rightJoystick = document.getElementById("rightJoystick");
-    const leftJoystickKnob = leftJoystick.querySelector('#joystickKnob');
-    const rightJoystickKnob = rightJoystick.querySelector('#joystickKnob');
+    const leftJoystickKnob = leftJoystick.querySelector('#leftJoystickKnob');
+    const rightJoystickKnob = rightJoystick.querySelector('#rightJoystickKnob');
     let isDraggingLeft = false;
     let isDraggingRight = false;
 
