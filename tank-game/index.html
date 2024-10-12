@@ -104,10 +104,13 @@
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         size: 20,
-        visible: false
+        baseSize: 20,          // Added baseSize
+        visible: false,
+        animationTime: 0       // Added animationTime
     };
 
     let heartTimer; // Timer for heart appearance
+    let lastTime = 0; // Initialize lastTime for deltaTime calculation
 
     // Generate random grasses and trees across the canvas
     function generateRandomObjects() {
@@ -149,11 +152,12 @@
 
     // Show heart icon randomly
     function showHeart() {
-        if (playerTank.energy < 50) {
+        // if (playerTank.energy < 50) {
             heart.visible = true;
             heart.x = Math.random() * canvas.width;
             heart.y = Math.random() * canvas.height;
-        }
+            heart.animationTime = 0; // Reset animation time when heart appears
+        // }
     }
 
     // Show shoe icon randomly
@@ -181,7 +185,10 @@
     }
 
     // Game loop
-    function gameLoop() {
+    function gameLoop(timestamp) {
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawWatermark(); // Draw the watermark first
         drawRandomObjects();
@@ -193,7 +200,7 @@
         drawEnergy();
         drawScore();
         drawStage();
-        drawHeart(); // Draw heart icon
+        drawHeart(deltaTime); // Pass deltaTime
         drawShoes(); // Draw shoe icons
         drawBulletIcons(); // Draw bullet icons
         checkHeartCollision(); // Check for heart collision
@@ -201,11 +208,8 @@
         checkBulletIconCollision(); // Check for bullet icon collision
 
         // Randomly show the heart based on timer
-        if (heartTimer <= 0) {
+        if (Math.random() < 0.001) {
             showHeart();
-            heartTimer = Math.random() * 5000 + 3000; // Reset timer (3-8 seconds)
-        } else {
-            heartTimer -= 16; // Decrease timer (approximately per frame)
         }
 
         // Show shoe icon at random intervals (less frequently)
@@ -341,16 +345,27 @@
         ctx.fillText(`Stage: ${stage}`, 10, 80);
     }
 
-    function drawHeart() {
+    function drawHeart(deltaTime) {
         if (heart.visible) {
+            // Update the animation time
+            heart.animationTime += deltaTime * 0.01; // Adjust the speed of pulsation
+
+            // Calculate the new size using a sine wave for smooth pulsation
+            heart.size = heart.baseSize + Math.sin(heart.animationTime) * 5; // Pulsate between baseSize ±5
+
+            ctx.save();
+            ctx.translate(heart.x, heart.y);
+            ctx.scale(heart.size / heart.baseSize, heart.size / heart.baseSize); // Scale the heart drawing
             ctx.fillStyle = "red";
             ctx.beginPath();
-            ctx.moveTo(heart.x, heart.y);
-            ctx.bezierCurveTo(heart.x - heart.size / 2, heart.y - heart.size / 2, heart.x - heart.size, heart.y + heart.size / 4, heart.x, heart.y + heart.size);
-            ctx.bezierCurveTo(heart.x + heart.size, heart.y + heart.size / 4, heart.x + heart.size / 2, heart.y - heart.size / 2, heart.x, heart.y);
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(-heart.baseSize / 2, -heart.baseSize / 2, -heart.baseSize, heart.baseSize / 4, 0, heart.baseSize);
+            ctx.bezierCurveTo(heart.baseSize, heart.baseSize / 4, heart.baseSize / 2, -heart.baseSize / 2, 0, 0);
             ctx.fill();
+            ctx.restore();
         }
     }
+
 
     function drawShoes() {
         shoes.forEach(shoe => {
@@ -369,10 +384,40 @@
     function drawBulletIcons() {
         bulletIcons.forEach(bulletIcon => {
             if (bulletIcon.visible) {
-                ctx.fillStyle = "yellow";
+                ctx.save();
+                ctx.translate(bulletIcon.x, bulletIcon.y);
+                ctx.rotate(Math.PI / 4); // Rotate the bullet for a dynamic effect
+
+                // Bullet dimensions
+                const width = bulletIcon.size / 2;
+                const height = bulletIcon.size * 2;
+
+                // Draw bullet casing
+                const casingGradient = ctx.createLinearGradient(0, -height / 2, 0, height / 2);
+                casingGradient.addColorStop(0, "#D4AF37"); // Gold color
+                casingGradient.addColorStop(1, "#A67C00"); // Darker gold
+                ctx.fillStyle = casingGradient;
+                ctx.fillRect(-width / 2, -height / 2, width, height);
+
+                // Draw bullet tip
+                ctx.fillStyle = "#B22222"; // Firebrick color for the tip
                 ctx.beginPath();
-                ctx.arc(bulletIcon.x, bulletIcon.y, bulletIcon.size, 0, Math.PI * 2);
+                ctx.moveTo(-width / 2, -height / 2);
+                ctx.lineTo(0, -height / 2 - width); // Tip point
+                ctx.lineTo(width / 2, -height / 2);
+                ctx.closePath();
                 ctx.fill();
+
+                // Draw bullet base
+                ctx.fillStyle = "#8B4513"; // SaddleBrown color for the base
+                ctx.fillRect(-width / 2, height / 2 - width / 2, width, width / 2);
+
+                // Draw bullet casing outline
+                ctx.strokeStyle = "#000"; // Black outline
+                ctx.lineWidth = 1;
+                ctx.strokeRect(-width / 2, -height / 2, width, height);
+
+                ctx.restore();
             }
         });
     }
@@ -560,6 +605,20 @@
         }
     }
 
+    // New function to check collision with enemy tanks
+    function isCollisionWithEnemyTank(newX, newY) {
+        for (let enemy of enemyTanks) {
+            const dx = newX - enemy.x;
+            const dy = newY - enemy.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < (playerTank.width / 2 + enemy.width / 2)) {
+                return true; // Collision detected
+            }
+        }
+        return false; // No collision
+    }
+
     // Joystick handling
     const leftJoystick = document.getElementById("leftJoystick");
     const rightJoystick = document.getElementById("rightJoystick");
@@ -594,15 +653,25 @@
         const distance = Math.sqrt(joystickX ** 2 + joystickY ** 2);
 
         // Cap the joystick movement
+        let angle, moveX, moveY;
         if (distance > 40) { // Radius of joystick
-            const angle = Math.atan2(joystickY, joystickX);
-            playerTank.x += Math.cos(angle) * playerTank.speed;
-            playerTank.y += Math.sin(angle) * playerTank.speed;
+            angle = Math.atan2(joystickY, joystickX);
+            moveX = Math.cos(angle) * playerTank.speed;
+            moveY = Math.sin(angle) * playerTank.speed;
             leftJoystickKnob.style.transform = `translate(${Math.cos(angle) * 40}px, ${Math.sin(angle) * 40}px)`; // Move knob
         } else {
-            playerTank.x += joystickX * 0.05; // Control speed sensitivity
-            playerTank.y += joystickY * 0.05; // Control speed sensitivity
+            angle = Math.atan2(joystickY, joystickX);
+            moveX = joystickX * 0.05;
+            moveY = joystickY * 0.05;
             leftJoystickKnob.style.transform = `translate(${joystickX}px, ${joystickY}px)`; // Move knob
+        }
+
+        const newX = playerTank.x + moveX;
+        const newY = playerTank.y + moveY;
+
+        if (!isCollisionWithEnemyTank(newX, newY)) {
+            playerTank.x = newX;
+            playerTank.y = newY;
         }
     }
 
@@ -653,16 +722,25 @@
     };
 
     function handleKeyboardInput() {
+        let newX = playerTank.x;
+        let newY = playerTank.y;
+
         // Move forward (ArrowUp)
         if (keys.ArrowUp) {
-            playerTank.x += Math.cos(playerTank.angle) * playerTank.speed; // Move in the direction the tank is facing
-            playerTank.y += Math.sin(playerTank.angle) * playerTank.speed; // Move in the direction the tank is facing
+            newX += Math.cos(playerTank.angle) * playerTank.speed; // Calculate potential new position
+            newY += Math.sin(playerTank.angle) * playerTank.speed;
         }
 
         // Move backward (ArrowDown)
         if (keys.ArrowDown) {
-            playerTank.x -= Math.cos(playerTank.angle) * playerTank.speed; // Move in the opposite direction
-            playerTank.y -= Math.sin(playerTank.angle) * playerTank.speed; // Move in the opposite direction
+            newX -= Math.cos(playerTank.angle) * playerTank.speed; // Calculate potential new position
+            newY -= Math.sin(playerTank.angle) * playerTank.speed;
+        }
+
+        // Check for collision before updating position
+        if (!isCollisionWithEnemyTank(newX, newY)) {
+            playerTank.x = newX;
+            playerTank.y = newY;
         }
 
         // Rotate left (ArrowLeft)
