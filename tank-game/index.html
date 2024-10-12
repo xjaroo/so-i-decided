@@ -47,6 +47,7 @@
 
     let score = 0; // Player's score
     let stage = 1; // Current stage
+    let enemyBulletSpeed = 2; // Starting speed of enemy bullets
 
     // Track keyboard input
     const keys = {
@@ -207,7 +208,7 @@
             x: bulletX,
             y: bulletY,
             angle: Math.atan2(playerTank.y - bulletY, playerTank.x - bulletX), // Aim at the player
-            speed: 3
+            speed: enemyBulletSpeed // Set bullet speed based on current stage
         });
     }
 
@@ -293,6 +294,7 @@
         // Check for stage progression
         if (enemyTanks.length === 0) {
             stage++;
+            enemyBulletSpeed += 1; // Increase enemy bullet speed with each stage
             generateEnemyTanks(); // Regenerate enemy tanks for the next stage
         }
     }
