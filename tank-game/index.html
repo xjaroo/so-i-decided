@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tank Game v0.1.2</title>
+    <title>Tank Game</title>
     <style>
         body, html {
             margin: 0;
@@ -40,17 +40,6 @@
             position: absolute;
             pointer-events: none;
         }
-        #shootButton {
-            position: absolute;
-            bottom: 20px;
-            right: 20px; /* Position on the right side */
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid #000;
-            border-radius: 5px;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 16px; /* Adjust button text size */
-        }
         #versionInfo {
             position: absolute;
             top: 10px;
@@ -66,7 +55,6 @@
 <div id="joystick">
     <div id="joystickKnob"></div>
 </div>
-<div id="shootButton">Shoot</div>
 <div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
 <script>
     const canvas = document.getElementById("gameCanvas");
@@ -544,9 +532,14 @@
         }
     }
 
-    // Shoot button
-    document.getElementById("shootButton").addEventListener('touchstart', () => {
-        shootBullet(); // Shoot when the button is pressed
+    // Touch shooting (tap to shoot)
+    canvas.addEventListener('touchstart', (e) => {
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+
+        // Calculate angle to tap position
+        playerTank.angle = Math.atan2(touchY - playerTank.y, touchX - playerTank.x); // Change tank direction
+        shootBullet(); // Shoot towards the tap
     });
 
     // Keyboard controls
