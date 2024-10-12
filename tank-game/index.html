@@ -18,10 +18,44 @@
             width: 100vw;
             height: 100vh;
         }
+        .button {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid #000;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        #upButton {
+            bottom: 100px;
+            left: 20px;
+        }
+        #downButton {
+            bottom: 40px;
+            left: 20px;
+        }
+        #leftButton {
+            bottom: 70px;
+            left: 20px;
+        }
+        #rightButton {
+            bottom: 70px;
+            left: 100px;
+        }
+        #shootButton {
+            bottom: 20px;
+            left: 20px;
+            width: 100px;
+        }
     </style>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
+<div id="upButton" class="button">Up</div>
+<div id="downButton" class="button">Down</div>
+<div id="leftButton" class="button">Left</div>
+<div id="rightButton" class="button">Right</div>
+<div id="shootButton" class="button">Shoot</div>
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -64,15 +98,6 @@
     };
 
     let heartTimer; // Timer for heart appearance
-
-    // Track keyboard input
-    const keys = {
-        ArrowUp: false,
-        ArrowDown: false,
-        ArrowLeft: false,
-        ArrowRight: false,
-        Space: false
-    };
 
     // Generate random grasses and trees across the canvas
     function generateRandomObjects() {
@@ -151,7 +176,6 @@
         drawRandomObjects();
         updateEnemyTanks();
         updateEnemyBullets();
-        handleKeyboardInput();
         drawPlayerTank();
         updateBullets();
         checkCollisions();
@@ -462,66 +486,32 @@
         }
     }
 
-    function handleKeyboardInput() {
-        // Move forward (ArrowUp)
-        if (keys.ArrowUp) {
-            playerTank.x += Math.cos(playerTank.angle) * playerTank.speed;
-            playerTank.y += Math.sin(playerTank.angle) * playerTank.speed;
-        }
-
-        // Move backward (ArrowDown)
-        if (keys.ArrowDown) {
-            playerTank.x -= Math.cos(playerTank.angle) * playerTank.speed;
-            playerTank.y -= Math.sin(playerTank.angle) * playerTank.speed;
-        }
-
-        // Rotate left (ArrowLeft)
-        if (keys.ArrowLeft) {
-            playerTank.angle -= 0.05;
-        }
-
-        // Rotate right (ArrowRight)
-        if (keys.ArrowRight) {
-            playerTank.angle += 0.05;
-        }
-
-        // Shoot bullet (Space)
-        if (keys.Space) {
-            shootBullet();
-            keys.Space = false; // Prevent continuous shooting
-        }
-    }
-
     // Touch control handling
-    let touchStartX, touchStartY, touchEndX, touchEndY;
-
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevent scrolling
-        const touch = e.touches[0];
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
+    document.getElementById("upButton").addEventListener('touchstart', () => {
+        playerTank.y -= playerTank.speed;
     });
 
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault(); // Prevent scrolling
-        const touch = e.touches[0];
-        touchEndX = touch.clientX;
-        touchEndY = touch.clientY;
-
-        // Calculate the movement direction
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-
-        // Move the tank based on touch direction
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            playerTank.angle += deltaX > 0 ? 0.05 : -0.05; // Rotate left or right
-        } else {
-            playerTank.y += deltaY > 0 ? playerTank.speed : -playerTank.speed; // Move up or down
-        }
+    document.getElementById("downButton").addEventListener('touchstart', () => {
+        playerTank.y += playerTank.speed;
     });
 
-    canvas.addEventListener('touchend', () => {
-        shootBullet(); // Shoot when the touch ends
+    document.getElementById("leftButton").addEventListener('touchstart', () => {
+        playerTank.angle -= 0.05;
+    });
+
+    document.getElementById("rightButton").addEventListener('touchstart', () => {
+        playerTank.angle += 0.05;
+    });
+
+    document.getElementById("shootButton").addEventListener('touchstart', () => {
+        shootBullet(); // Shoot when the button is pressed
+    });
+
+    // To prevent touch end events from firing too rapidly
+    document.querySelectorAll('.button').forEach(button => {
+        button.addEventListener('touchend', (e) => {
+            e.preventDefault(); // Prevent default touch end behavior
+        });
     });
 
     window.addEventListener("keydown", (e) => {
