@@ -863,6 +863,7 @@
                 isDraggingLeft = false;
                 leftJoystickTouchId = null;
                 leftJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+                handleMovementSound(false);  // Stop movement sound
                 break;
             }
         }
@@ -943,7 +944,6 @@
                 isAutoShooting = false;
                 rightJoystickTouchId = null;
                 rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
-                handleMovementSound(false);  // Stop movement sound
                 break;
             }
         }
