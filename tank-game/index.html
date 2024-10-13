@@ -77,6 +77,7 @@
     <div class="joystickKnob"></div>
 </div>
 <audio id="shootingSound" src="shooting.mp3" preload="auto"></audio>
+<audio id="movementSound" src="move.mp3" preload="auto" loop></audio>
 
 <div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
 <script>
@@ -124,6 +125,8 @@
     let leftJoystickTouchId = null;
     let rightJoystickTouchId = null;
 
+    const movementSound = document.getElementById('movementSound');  // Get the movement sound element
+    let isMoving = false;  // Flag to track if the tank is moving
 
     // Heart icon properties
     const heart = {
@@ -954,17 +957,20 @@
     function handleKeyboardInput() {
         let newX = playerTank.x;
         let newY = playerTank.y;
+        let moving = false;
 
         // Move forward (ArrowUp)
         if (keys.ArrowUp) {
             newX += Math.cos(playerTank.angle) * playerTank.speed; // Calculate potential new position
             newY += Math.sin(playerTank.angle) * playerTank.speed;
+            moving = true;  // Tank is moving
         }
 
         // Move backward (ArrowDown)
         if (keys.ArrowDown) {
             newX -= Math.cos(playerTank.angle) * playerTank.speed; // Calculate potential new position
             newY -= Math.sin(playerTank.angle) * playerTank.speed;
+            moving = true;  // Tank is moving
         }
 
         // Check for collision before updating position
@@ -976,17 +982,32 @@
         // Rotate left (ArrowLeft)
         if (keys.ArrowLeft) {
             playerTank.angle -= 0.05;
+            moving = true;  // Tank is moving
         }
 
         // Rotate right (ArrowRight)
         if (keys.ArrowRight) {
             playerTank.angle += 0.05;
+            moving = true;  // Tank is moving
         }
 
         // Shoot bullet (Space)
         if (keys.Space) {
             shootBullet();
             keys.Space = false; // Prevent continuous shooting
+        }
+
+        if (moving) {
+            if (!isMoving) {
+                movementSound.currentTime = 0;  // Reset the sound to the beginning
+                movementSound.play();           // Play the movement sound
+                isMoving = true;                // Update the flag to indicate tank is moving
+            }
+        } else {
+            if (isMoving) {
+                movementSound.pause();          // Pause the sound when the tank stops moving
+                isMoving = false;               // Update the flag to indicate the tank stopped
+            }
         }
     }
 
