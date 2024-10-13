@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplication Mastery</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 50px;
+    }
+
+    .game-container {
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    #question {
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    #answer-input, #submit-answer {
+      display: none;
+    }
+
+    #answer-input {
+      padding: 10px;
+      font-size: 18px;
+      width: 50%;
+      margin-bottom: 10px;
+    }
+
+    #submit-answer {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    #feedback {
+      margin-top: 10px;
+      font-size: 18px;
+      color: green;
+    }
+
+    #score {
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Progress bar styles */
+    #progress-container {
+      width: 100%;
+      background-color: #f3f3f3;
+      border-radius: 5px;
+      margin-top: 20px;
+      visibility: hidden; /* Initially hidden */
+    }
+
+    #progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #4caf50;
+      border-radius: 5px;
+    }
+
+    /* Time completion display */
+    #time-completion {
+      font-size: 18px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <h1>Multiplication Mastery</h1>
+  <div id="game">
+    <h2>Stage <span id="stage-number">1</span></h2>
+    <div id="question"></div>
+    <input type="number" id="answer-input" placeholder="Your Answer">
+    <button id="submit-answer">Submit Answer</button>
+    <div id="feedback"></div>
+    <div id="score">Score: <span id="score-value">0</span></div>
+
+    <!-- Progress Bar -->
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+
+    <!-- Time Completion Display -->
+    <div id="time-completion"></div>
+  </div>
+  <button id="start-game">Start Game</button>
+</div>
+
+<script>
+  let stage = 1;
+  let score = 0;
+  let currentQuestion;
+  let baseTimeLimit = 10000; // Base time limit (10 seconds)
+  let timeLimit; // Dynamic time limit for each stage
+  let timer;
+  let progressInterval;
+  let progressWidth = 100;
+  let challenges = []; // Array to store challenge questions
+  let startTime; // Variable to store start time
+  let endTime; // Variable to store end time
+
+  const stageConfig = {
+    1: { min1: 1, max1: 6, min2: 1, max2: 6, count: 10 },
+    2: { min1: 7, max1: 9, min2: 1, max2: 6, count: 12 },
+    3: { min1: 11, max1: 20, min2: 1, max2: 9, count: 15 },
+    4: { min1: 10, max1: 30, min2: 1, max2: 10, count: 20 } // Simplified two-digit numbers (10-30) x single digits
+  };
+
+  function startGame() {
+    score = 0;
+    stage = 1;
+    challenges = []; // Reset challenges on game start
+    startTime = Date.now(); // Record the start time
+    document.getElementById("start-game").style.display = 'none';
+    document.getElementById("answer-input").style.display = 'block';
+    document.getElementById("submit-answer").style.display = 'block';
+    document.getElementById("progress-container").style.visibility = 'visible'; // Show progress bar
+    document.getElementById("score-value").textContent = score;
+    document.getElementById("time-completion").textContent = ""; // Clear time completion text
+    loadStage(stage);
+    document.getElementById("answer-input").focus();
+  }
+
+  function loadStage(currentStage) {
+    document.getElementById("stage-number").textContent = currentStage;
+    timeLimit = baseTimeLimit + (currentStage - 1) * 5000; // Increase time by 5 seconds for each stage
+    askNextQuestion();
+  }
+
+  function askNextQuestion() {
+    if (challenges.length > 0) {
+      currentQuestion = challenges.shift(); // Take the first question from challenges
+    } else {
+      generateNewQuestion(stage);
+    }
+    document.getElementById("question").textContent = `${currentQuestion.num1} x ${currentQuestion.num2} = ?`;
+    resetTimer();
+  }
+
+  function generateNewQuestion(stage) {
+    let config = stageConfig[stage];
+    let num1 = Math.floor(Math.random() * (config.max1 - config.min1 + 1)) + config.min1;
+    let num2 = Math.floor(Math.random() * (config.max2 - config.min2 + 1)) + config.min2;
+    currentQuestion = { num1, num2, answer: num1 * num2 };
+  }
+
+  function checkAnswer() {
+    let userAnswer = document.getElementById("answer-input").value;
+    if (parseInt(userAnswer) === currentQuestion.answer) {
+      score++;
+      document.getElementById("feedback").textContent = "Correct!";
+      document.getElementById("score-value").textContent = score;
+    } else {
+      document.getElementById("feedback").textContent = "Wrong! This will be asked again.";
+      challenges.push(currentQuestion); // Add to challenges if wrong
+    }
+    document.getElementById("answer-input").value = "";
+    document.getElementById("answer-input").focus();
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    clearTimeout(timer);
+    clearInterval(progressInterval);
+    let config = stageConfig[stage];
+
+    // If we completed the stage's required number of correct answers and no more challenges:
+    if (score >= config.count && challenges.length === 0) {
+      if (stage < 4) {
+        stage++;
+        loadStage(stage);
+      } else {
+        endGame();
+      }
+    } else {
+      askNextQuestion();
+    }
+  }
+
+  function resetTimer() {
+    clearTimeout(timer);
+    clearInterval(progressInterval);
+    progressWidth = 100;
+    document.getElementById("progress-bar").style.width = `${progressWidth}%`;
+    timer = setTimeout(function () {
+      document.getElementById("feedback").textContent = "Time's up! This will be asked again.";
+      challenges.push(currentQuestion); // Add to challenges if timed out
+      nextQuestion();
+    }, timeLimit);
+    progressInterval = setInterval(updateProgressBar, timeLimit / 100);
+  }
+
+  function updateProgressBar() {
+    if (progressWidth > 0) {
+      progressWidth--;
+      document.getElementById("progress-bar").style.width = `${progressWidth}%`;
+    } else {
+      clearInterval(progressInterval);
+    }
+  }
+
+  function endGame() {
+    endTime = Date.now(); // Record the end time
+    let totalTime = Math.floor((endTime - startTime) / 1000); // Calculate total time in seconds
+    document.getElementById("question").textContent = "Congratulations! You completed all stages!";
+    document.getElementById("submit-answer").style.display = 'none';
+    document.getElementById("answer-input").style.display = 'none';
+    document.getElementById("start-game").style.display = 'block';
+    document.getElementById("start-game").textContent = "Play Again";
+    document.getElementById("progress-container").style.visibility = 'hidden'; // Hide progress bar at end
+    document.getElementById("time-completion").textContent = `Total Time: ${totalTime} seconds`; // Display total time
+  }
+
+  document.getElementById("start-game").addEventListener("click", startGame);
+  document.getElementById("submit-answer").addEventListener("click", checkAnswer);
+
+  document.getElementById("answer-input").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+      checkAnswer();
+    }
+  });
+</script>
+</body>
+</html>
