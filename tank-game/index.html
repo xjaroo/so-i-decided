@@ -127,6 +127,7 @@
 
     const movementSound = document.getElementById('movementSound');  // Get the movement sound element
     let isMoving = false;  // Flag to track if the tank is moving
+    let movementCooldown = false;
 
     // Heart icon properties
     const heart = {
@@ -868,6 +869,19 @@
     }, { passive: false });
 
 
+    // A helper function to handle movement sound smoothly
+    function handleMovementSound(isTankMoving) {
+        if (isTankMoving && !isMoving && !movementCooldown) {
+            movementSound.currentTime = 0;  // Reset the sound to the beginning
+            movementSound.play();           // Play the movement sound
+            isMoving = true;                // Set moving flag
+            movementCooldown = true;        // Prevent rapid sound triggers
+            setTimeout(() => movementCooldown = false, 200); // Add cooldown to prevent rapid toggling
+        } else if (!isTankMoving && isMoving) {
+            movementSound.pause();          // Stop the movement sound
+            isMoving = false;               // Reset moving flag
+        }
+    }
     function updateLeftJoystick(touch) {
         const joystickX = touch.clientX - leftJoystick.getBoundingClientRect().left - leftJoystick.clientWidth / 2;
         const joystickY = touch.clientY - leftJoystick.getBoundingClientRect().top - leftJoystick.clientHeight / 2;
@@ -896,17 +910,10 @@
             playerTank.y = newY;
 
             // If the tank is moving and sound is not already playing, start it
-            if (!isMoving) {
-                movementSound.currentTime = 0;  // Reset the sound to the beginning
-                movementSound.play();           // Play the movement sound
-                isMoving = true;                // Set the movement flag to true
-            }
+            handleMovementSound(true);
         } else {
             // If the tank isn't moving, stop the sound
-            if (isMoving) {
-                movementSound.pause();          // Stop the movement sound
-                isMoving = false;               // Set the movement flag to false
-            }
+            handleMovementSound(false);
         }
     }
 
@@ -936,8 +943,7 @@
                 isAutoShooting = false;
                 rightJoystickTouchId = null;
                 rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
-                movementSound.pause();  // Stop the movement sound when joystick is released
-                isMoving = false;       // Set the movement flag to false
+                handleMovementSound(false);  // Stop movement sound
                 break;
             }
         }
