@@ -115,6 +115,11 @@
     <div id="time-completion"></div>
   </div>
   <button id="start-game">Start Game</button>
+
+  <!-- Audio for Correct Answer -->
+  <audio id="correct-sound" src="correct.mp3"></audio> <!-- Ensure correct.mp3 is in the same folder -->
+  <audio id="wrong-sound" src="wrong.mp3"></audio> <!-- Ensure correct.mp3 is in the same folder -->
+  <audio id="done-sound" src="well-done.mp3"></audio> <!-- Ensure correct.mp3 is in the same folder -->
 </div>
 
 <script>
@@ -181,9 +186,22 @@
       score++;
       document.getElementById("feedback").textContent = "Correct!";
       document.getElementById("score-value").textContent = score;
+
+      // Play correct sound
+      let correctSound = document.getElementById("correct-sound");
+
+      correctSound.play().catch((error) => {
+        console.log('Error:', error);
+      });
     } else {
       document.getElementById("feedback").textContent = "Wrong! This will be asked again.";
       challenges.push(currentQuestion); // Add to challenges if wrong
+      let wrongSound = document.getElementById("wrong-sound");
+      wrongSound.play();
+
+      wrongSound.play().catch((error) => {
+        console.log('Error:', error);
+      });
     }
     document.getElementById("answer-input").value = "";
     document.getElementById("answer-input").focus();
@@ -240,6 +258,12 @@
     document.getElementById("start-game").textContent = "Play Again";
     document.getElementById("progress-container").style.visibility = 'hidden'; // Hide progress bar at end
     document.getElementById("time-completion").textContent = `Total Time: ${totalTime} seconds`; // Display total time
+    let endSound = document.getElementById("done-sound");
+
+    endSound.play().catch((error) => {
+      console.log('Error:', error);
+    });
+
   }
 
   document.getElementById("start-game").addEventListener("click", startGame);
