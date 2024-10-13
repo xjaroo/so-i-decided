@@ -78,8 +78,9 @@
 </div>
 <audio id="shootingSound" src="shooting.mp3" preload="auto"></audio>
 <audio id="movementSound" src="move.mp3" preload="auto" loop></audio>
+<audio id="backgroundMusic" src="game-music.mp3" preload="auto" loop></audio>
 
-<div id="versionInfo">Version: 1.0.2</div> <!-- Version information -->
+<div id="versionInfo">Version: 1.0.3</div> <!-- Version information -->
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -127,7 +128,12 @@
 
     const movementSound = document.getElementById('movementSound');  // Get the movement sound element
     let isMoving = false;  // Flag to track if the tank is moving
-    let movementCooldown = false;
+
+
+    const backgroundMusic = document.getElementById('backgroundMusic');
+
+    // Play the background music in a loop when the game starts
+
 
     // Heart icon properties
     const heart = {
@@ -142,6 +148,23 @@
     let heartTimer; // Timer for heart appearance
     let lastTime = 0; // Initialize lastTime for deltaTime calculation
 
+
+    // Function to start the background music
+    function startBackgroundMusic() {
+        backgroundMusic.play().catch((error) => {
+            console.log('Background music could not be played automatically:', error);
+        });
+    }
+
+    // Add an event listener for the first interaction (click, touchstart, or keydown)
+    function enableMusicOnInteraction() {
+        window.addEventListener('click', startBackgroundMusic, { once: true });
+        window.addEventListener('touchstart', startBackgroundMusic, { once: true });
+        window.addEventListener('keydown', startBackgroundMusic, { once: true });
+    }
+
+    // Call this function to set up the listener
+    enableMusicOnInteraction();
     // Generate random grasses and trees across the canvas
     function generateRandomObjects() {
         // Generate grasses
@@ -786,6 +809,7 @@
                 enemyBullets.splice(bulletIndex, 1); // Remove the enemy bullet
                 if (playerTank.energy <= 0) {
                     alert("Game Over! You have been destroyed!");
+
                     document.location.reload(); // Restart the game
                 }
             }
