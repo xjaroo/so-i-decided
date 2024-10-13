@@ -76,6 +76,7 @@
 <div id="rightJoystick">
     <div class="joystickKnob"></div>
 </div>
+<audio id="shootingSound" src="shooting.mp3" preload="auto"></audio>
 
 <div id="versionInfo">Version: 1.0.0</div> <!-- Version information -->
 <script>
@@ -700,7 +701,19 @@
         });
     }
 
+
+    // Create a pool of audio objects for the shooting sound
+    const shootingSounds = [];
+    const maxSounds = 5; // Adjust this number based on how many sounds can play concurrently
+
+    for (let i = 0; i < maxSounds; i++) {
+        const audio = new Audio('shooting.mp3');
+        shootingSounds.push(audio);
+    }
+
+    let currentSoundIndex = 0; // Track which audio to play next
     function shootBullet() {
+
         const barrelLength = playerTank.height / 2 + 20; // Adjusted for extended barrel
         const bulletX = playerTank.x + Math.cos(playerTank.angle) * barrelLength;
         const bulletY = playerTank.y + Math.sin(playerTank.angle) * barrelLength;
@@ -712,6 +725,12 @@
             speed: playerBulletSpeed,
             origin: { x: bulletX, y: bulletY } // Store the origin of the bullet
         });
+        // Play the next available sound in the queue
+        shootingSounds[currentSoundIndex].currentTime = 0; // Reset the sound to the beginning
+        shootingSounds[currentSoundIndex].play();          // Play the shooting sound
+
+        // Update to use the next audio object in the queue
+        currentSoundIndex = (currentSoundIndex + 1) % maxSounds;
     }
 
     function checkCollisions() {
