@@ -890,9 +890,23 @@
         const newX = playerTank.x + moveX;
         const newY = playerTank.y + moveY;
 
+        // Check for collisions and update tank position
         if (!isCollisionWithEnemyTank(newX, newY)) {
             playerTank.x = newX;
             playerTank.y = newY;
+
+            // If the tank is moving and sound is not already playing, start it
+            if (!isMoving) {
+                movementSound.currentTime = 0;  // Reset the sound to the beginning
+                movementSound.play();           // Play the movement sound
+                isMoving = true;                // Set the movement flag to true
+            }
+        } else {
+            // If the tank isn't moving, stop the sound
+            if (isMoving) {
+                movementSound.pause();          // Stop the movement sound
+                isMoving = false;               // Set the movement flag to false
+            }
         }
     }
 
@@ -922,6 +936,8 @@
                 isAutoShooting = false;
                 rightJoystickTouchId = null;
                 rightJoystickKnob.style.transform = 'translate(0, 0)'; // Reset knob position
+                movementSound.pause();  // Stop the movement sound when joystick is released
+                isMoving = false;       // Set the movement flag to false
                 break;
             }
         }
