@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Multiplication Mastery</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -121,6 +122,27 @@
   <audio id="wrong-sound" src="wrong.mp3"></audio> <!-- Ensure correct.mp3 is in the same folder -->
   <audio id="done-sound" src="well-done.mp3"></audio> <!-- Ensure correct.mp3 is in the same folder -->
 </div>
+
+<script>
+  const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
+
+  // Create Supabase client
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+  // Now fetchData can access the globally defined supabase
+  async function fetchData() {
+    const { data, error } = await supabase.from('table_name').select('*');
+    if (error) {
+      console.error('Error:', error);
+    } else {
+      console.log('Data:', data);
+    }
+  }
+
+  fetchData(); // Safe to call here after supabase has been initialized
+</script>
 
 <script>
   let stage = 1;
