@@ -341,7 +341,7 @@
 
     // If we completed the stage's required number of correct answers and no more challenges:
     if (score >= config.count && challenges.length === 0) {
-      if (stage < 1) {
+      if (stage < 3) {
         stage++;
         loadStage(stage);
       } else {
