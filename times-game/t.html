@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Example</title>
+    <!-- Include Supabase JavaScript library -->
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <!-- Add defer to delay execution until DOM is fully parsed -->
+</head>
+<body>
+<h1>Supabase Test</h1>
+<!-- JavaScript to initialize and fetch data from Supabase -->
+<script>
+    // Use window.onload to ensure the Supabase library is loaded before running the custom script
+    window.onload = function () {
+        // Define Supabase credentials
+        const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
+
+        // Check if supabase is defined
+        if (typeof supabase === 'undefined') {
+            console.error('Supabase is not defined. Ensure the library is loaded correctly.');
+            return;
+        }
+
+        // Create Supabase client
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Fetch data function
+        async function fetchData() {
+            try {
+                const { data, error } = await supabaseClient.from('ranking').select('*');
+                if (error) {
+                    console.error('Error fetching data:', error);
+                } else {
+                    console.log('Data:', data);
+                }
+            } catch (err) {
+                console.error('Unexpected error:', err);
+            }
+        }
+
+        // Call fetchData function
+        fetchData();
+    };
+</script>
+</body>
+</html>

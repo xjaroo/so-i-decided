@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Multiplication Mastery</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js" ></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -38,13 +39,14 @@
     #answer-input {
       padding: 10px;
       font-size: 18px;
-      width: 50%;
+      width: 95%; /* Set to full width */
       margin-bottom: 10px;
     }
 
     #submit-answer {
       padding: 10px 20px;
       font-size: 18px;
+      width: 100%; /* Set to full width */
       margin-bottom: 20px;
       cursor: pointer;
     }
@@ -94,13 +96,52 @@
       font-size: 18px;
       margin-top: 20px;
     }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 18px;
+      text-align: left;
+    }
+
+    table thead tr {
+      background-color: #009879;
+      color: white;
+      text-align: left;
+    }
+
+    table th, table td {
+      padding: 12px 15px;
+    }
+
+    table tbody tr {
+      border-bottom: 1px solid #dddddd;
+    }
+
+    table tbody tr:nth-of-type(even) {
+      background-color: #f3f3f3;
+    }
+
+    table tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    table tbody tr:last-of-type {
+      border-bottom: 2px solid #009879;
+    }
+
+    table th {
+      background-color: #009879;
+      color: white;
+    }
   </style>
 </head>
 <body>
 <div class="game-container">
-  <h1>Multiplication Mastery</h1>
+  <h2>Multiplication Mastery</h2>
   <div id="game">
-    <h2>Stage <span id="stage-number">1</span></h2>
+    <h3>Stage <span id="stage-number">1</span></h3>
     <div id="question"></div>
     <input type="number" id="answer-input"  inputmode="numeric" placeholder="Your Answer">
     <button id="submit-answer">Submit Answer</button>
@@ -115,6 +156,19 @@
     <!-- Time Completion Display -->
     <div id="time-completion"></div>
   </div>
+  <table id="rankingTable">
+    <thead>
+    <tr>
+      <th>Order</th>
+      <th>Name</th>
+      <th>Time</th>
+      <th>Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Data will be inserted here -->
+    </tbody>
+  </table>
   <button id="start-game">Start Game</button>
 
   <!-- Audio for Correct Answer -->
@@ -124,27 +178,77 @@
 </div>
 
 <script>
-  const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
+  // Use window.onload to ensure the Supabase library is loaded before running the custom script
+  window.onload = function () {
+    // Define Supabase credentials
+    const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
 
-  // Create Supabase client
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Check if supabase is defined
+    if (typeof supabase === 'undefined') {
+      console.error('Supabase is not defined. Ensure the library is loaded correctly.');
+      return;
+    }
+
+    // Create Supabase client
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Fetch data function
+    async function fetchData() {
+      try {
+        const { data, error } = await supabaseClient.from('ranking')
+                .select('*')
+                .order('created_at', { total_time: false })
+                .limit(5); // Limit the results to 5
+
+        if (error) {
+          console.error('Error fetching data:', error);
+        } else {
+          console.log('Data:', data);
+          populateTable(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+      }
+    }
+  fetchData();
 
 
-  // Now fetchData can access the globally defined supabase
-  async function fetchData() {
-    const { data, error } = await supabase.from('table_name').select('*');
-    if (error) {
-      console.error('Error:', error);
-    } else {
-      console.log('Data:', data);
+  async function insertScore(name, total_time) {
+    try {
+      const { data, error } = await supabaseClient.from('ranking')
+              .insert([{ person: name, total_time: total_time }]);
+
+      if (error) {
+        console.error('Error inserting score:', error);
+      } else {
+        console.log('Score inserted successfully:', data);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
     }
   }
 
-  fetchData(); // Safe to call here after supabase has been initialized
-</script>
 
-<script>
+  // Function to populate table with data
+  function populateTable(data) {
+    const tableBody = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
+    tableBody.innerHTML = ''; // Clear any existing rows
+
+    data.forEach((row, index) => {
+      const newRow = tableBody.insertRow();
+      const orderCell = newRow.insertCell(0);
+      const nameCell = newRow.insertCell(1);
+      const timeCell = newRow.insertCell(2);
+      const dateCell = newRow.insertCell(3);
+
+      orderCell.textContent = index + 1; // Order (1-based index)
+      nameCell.textContent = row.person; // Name field
+      timeCell.textContent = row.total_time.toLocaleString('en-AU'); // Name field
+      dateCell.textContent = new Date(row.created_at).toLocaleString(); // Date field
+    });
+  }
+
   let stage = 1;
   let score = 0;
   let currentQuestion;
@@ -237,7 +341,7 @@
 
     // If we completed the stage's required number of correct answers and no more challenges:
     if (score >= config.count && challenges.length === 0) {
-      if (stage < 4) {
+      if (stage < 1) {
         stage++;
         loadStage(stage);
       } else {
@@ -271,22 +375,34 @@
   }
 
   function endGame() {
-    endTime = Date.now(); // Record the end time
-    let totalTime = Math.floor((endTime - startTime) / 1000); // Calculate total time in seconds
+    endTime = Date.now();
+    let total_time = Math.floor((endTime - startTime) / 1000);
     document.getElementById("question").textContent = "Congratulations! You completed all stages!";
     document.getElementById("submit-answer").style.display = 'none';
     document.getElementById("answer-input").style.display = 'none';
     document.getElementById("start-game").style.display = 'block';
     document.getElementById("start-game").textContent = "Play Again";
-    document.getElementById("progress-container").style.visibility = 'hidden'; // Hide progress bar at end
-    document.getElementById("time-completion").textContent = `Total Time: ${totalTime} seconds`; // Display total time
-    let endSound = document.getElementById("done-sound");
+    document.getElementById("progress-container").style.visibility = 'hidden';
+    document.getElementById("time-completion").textContent = `Total Time: ${total_time} seconds`;
 
+    let endSound = document.getElementById("done-sound");
     endSound.play().catch((error) => {
       console.log('Error:', error);
     });
 
+    // Ask if the user wants to record their score
+    if (confirm("Do you want to record your score?")) {
+      let playerName = prompt("Please enter your name:");
+      if (playerName) {
+        insertScore(playerName, total_time);
+        location.reload();
+
+      }
+    }
   }
+
+
+
 
   document.getElementById("start-game").addEventListener("click", startGame);
   document.getElementById("submit-answer").addEventListener("click", checkAnswer);
@@ -296,6 +412,7 @@
       checkAnswer();
     }
   });
+  };
 </script>
 </body>
 </html>
