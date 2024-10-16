@@ -256,7 +256,8 @@
   async function insertScore(name, total_time) {
     try {
       const { data, error } = await supabaseClient.from('ranking')
-              .insert([{ person: name, total_time: total_time }]);
+              .insert([{ person: name, total_time: total_time }])
+              .select();
 
       if (error) {
         console.error('Error inserting score:', error);
@@ -302,7 +303,7 @@
   let endTime; // Variable to store end time
 
   const stageConfig = {
-    1: { min1: 2, max1: 6, min2: 3, max2: 7, count: 5 },
+    1: { min1: 2, max1: 6, min2: 3, max2: 7, count: 2 },
     2: { min1: 7, max1: 9, min2: 2, max2: 9, count: 10 },
     3: { min1: 11, max1: 20, min2: 2, max2: 9, count: 15 },
     4: { min1: 10, max1: 50, min2: 2, max2: 10, count: 20 } // Simplified two-digit numbers (10-30) x single digits
@@ -381,7 +382,7 @@
 
     // If we completed the stage's required number of correct answers and no more challenges:
     if (score >= config.count && challenges.length === 0) {
-      if (stage < 4) {
+      if (stage < 1) {
         stage++;
         loadStage(stage);
       } else {
@@ -435,7 +436,6 @@
       let playerName = prompt("Please enter your name:");
       if (playerName) {
         insertScore(playerName, total_time);
-        location.reload();
 
       }
     }
