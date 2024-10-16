@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Identification Score</title>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+</head>
+<body>
+
+<h1>User Identification Score</h1>
+<div id="info"></div>
+<div id="score"></div>
+
+<script>
+    let userData = {
+        ip: null,
+        fingerprint: null,
+        userAgent: null,
+        geolocation: { latitude: null, longitude: null }
+    };
+
+    let previousSessionData = {
+        ip: "123.456.789.101", // Example stored data from previous session
+        fingerprint: "21fe2360811d9a3fcbd0332184aa5456",
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        geolocation: { latitude: -33.8688, longitude: 151.2093 } // Example GPS coordinates
+    };
+
+    // Function to get the IP address (via an external API)
+    function getIPAddress() {
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                userData.ip = data.ip;
+                document.getElementById('info').innerHTML += `<p>IP Address: ${data.ip}</p>`;
+                calculateScore();
+            })
+            .catch(error => console.log('Error fetching IP address:', error));
+    }
+
+    // Function to get the Geolocation
+    function getGeolocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                userData.geolocation.latitude = position.coords.latitude;
+                userData.geolocation.longitude = position.coords.longitude;
+                document.getElementById('info').innerHTML += `<p>Location: Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}</p>`;
+                calculateScore();
+            });
+        } else {
+            document.getElementById('info').innerHTML += `<p>Geolocation not supported by this browser.</p>`;
+        }
+    }
+
+    // Function to get Browser Fingerprint
+    function getFingerprint() {
+        FingerprintJS.load().then(fp => {
+            fp.get().then(result => {
+                userData.fingerprint = result.visitorId;
+                document.getElementById('info').innerHTML += `<p>Browser Fingerprint: ${result.visitorId}</p>`;
+                calculateScore();
+            });
+        });
+    }
+
+    // Function to get the Browser User-Agent
+    function getUserAgent() {
+        userData.userAgent = navigator.userAgent;
+        document.getElementById('info').innerHTML += `<p>User-Agent: ${navigator.userAgent}</p>`;
+        calculateScore();
+    }
+
+    // Function to calculate score
+    function calculateScore() {
+        if (!userData.ip || !userData.fingerprint || !userData.userAgent || !userData.geolocation.latitude) {
+            return; // Wait until all data is collected
+        }
+
+        let score = 0;
+
+        // Compare Browser Fingerprint
+        if (userData.fingerprint === previousSessionData.fingerprint) {
+            score += 50;
+        } else {
+            // Check for small differences (this is a simplified check)
+            score += 25; // Assuming it's "slightly different"
+        }
+
+        // Compare User-Agent
+        if (userData.userAgent === previousSessionData.userAgent) {
+            score += 30;
+        } else if (userData.userAgent.split(' ')[0] === previousSessionData.userAgent.split(' ')[0]) {
+            score += 15; // Slight version difference
+        }
+
+        // Compare IP address
+        if (userData.ip === previousSessionData.ip) {
+            score += 10;
+        }
+
+        // Compare Geolocation (use a simple distance check)
+        const distance = calculateDistance(userData.geolocation.latitude, userData.geolocation.longitude, previousSessionData.geolocation.latitude, previousSessionData.geolocation.longitude);
+        if (distance <= 50) {
+            score += 10;
+        } else if (distance <= 500) {
+            score += 5;
+        }
+
+        document.getElementById('score').innerHTML = `<h2>Identification Score: ${score}/100</h2>`;
+    }
+
+    // Function to calculate distance between two latitude/longitude points (Haversine formula)
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radius of the Earth in km
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // Distance in km
+        return distance;
+    }
+
+    // Run all the functions when the page loads
+    window.onload = function() {
+        getIPAddress();
+        getGeolocation();
+        getFingerprint();
+        getUserAgent();
+    }
+</script>
+
+</body>
+</html>
