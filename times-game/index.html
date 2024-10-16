@@ -240,6 +240,7 @@
         const { data, error } = await supabaseClient.from('ranking')
                 .select('*')
                 .order('total_time', { total_time: true })
+                .order('created_at', { ascending: false })
                 .limit(10); // Limit the results to 5
 
         if (error) {
