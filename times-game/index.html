@@ -303,7 +303,7 @@
   let endTime; // Variable to store end time
 
   const stageConfig = {
-    1: { min1: 2, max1: 6, min2: 3, max2: 7, count: 2 },
+    1: { min1: 2, max1: 6, min2: 3, max2: 7, count: 5 },
     2: { min1: 7, max1: 9, min2: 2, max2: 9, count: 10 },
     3: { min1: 11, max1: 20, min2: 2, max2: 9, count: 15 },
     4: { min1: 10, max1: 50, min2: 2, max2: 10, count: 20 } // Simplified two-digit numbers (10-30) x single digits
@@ -382,7 +382,7 @@
 
     // If we completed the stage's required number of correct answers and no more challenges:
     if (score >= config.count && challenges.length === 0) {
-      if (stage < 1) {
+      if (stage < 4) {
         stage++;
         loadStage(stage);
       } else {
