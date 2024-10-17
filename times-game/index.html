@@ -435,7 +435,7 @@
     });
 
     // Ask if the user wants to record their score
-    if (confirm("Do you want to record your score?")) {
+    if (confirm(`Do you want to record your time (${total_time})?`)) {
       let playerName = prompt("Please enter your name:");
       if (playerName) {
         insertScore(playerName, total_time);
