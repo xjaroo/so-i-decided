@@ -59,17 +59,31 @@
 
         .business-card {
             background-color: #ffffff;
-            margin: 10px 0;
-            padding: 20px;
+            margin: 10px;
+            padding: 1px 20px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: box-shadow 0.3s ease-in-out;
+            position: relative; /* Allows absolute positioning within the card */
         }
 
         .business-card:hover {
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
+        /* Category Label at Top Right Corner */
+        /* Category Label Inside the Card (Top Right) */
+        .category-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #f1f1f1;
+            color: #333;
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -254,8 +268,10 @@
         businesses.forEach(business => {
             const businessCard = `
                 <div class="business-card">
+               <div class="category-label" onclick="filterByCategory('${business.category}')">
+                            ${business.category}
+                  </div>
                     <h2>${business.name}</h2>
-                    <p class="category">${business.category}</p>
                     <p><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}" target="_blank">${business.address}</a></p>
                     <p><a class="phone-link" href="tel:${business.phone}">${business.phone}</a></p>
                     <div class="opening-hours">
