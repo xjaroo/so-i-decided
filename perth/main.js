@@ -208,7 +208,7 @@ async function renderBusinessList(businesses) {
             for (const image_url of business.image_urls) {
                 const { data } = supabaseClient.storage.from('business-images').getPublicUrl(image_url);
                 const url = data.publicUrl; // Get the public URL
-                imageThumbnails += `<img src="${url}" alt="Business Thumbnail" style="max-width:150px;max-height:100px; cursor:pointer" onclick='showImageCarousel(${JSON.stringify(business.image_urls)})'>`;
+                imageThumbnails += `<img src="${url}" alt="Business Thumbnail" style="max-width:50px;max-height:50px; cursor:pointer" onclick='showImageCarousel(${JSON.stringify(business.image_urls)})'>`;
             }
         }
 
