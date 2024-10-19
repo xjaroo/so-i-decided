@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Melbourne Business Finder</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%; /* Full height for both html and body */
+      overflow-x: hidden; /* Prevent horizontal scrolling */
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      box-sizing: border-box;
+      background-color: #ffffff;
+    }
+
+    h1 {
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2b3e50;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #d0d7df;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+      background-color: #f9fafc;
+      color: #333;
+    }
+
+    button {
+      padding: 12px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin: 15px 0;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .business-card {
+      background-color: #ffffff;
+      margin: 10px;
+      padding: 1px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: box-shadow 0.3s ease-in-out;
+      position: relative; /* Allows absolute positioning within the card */
+    }
+
+    .business-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Category Label at Top Right Corner */
+    /* Category Label Inside the Card (Top Right) */
+    .category-label {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #f1f1f1;
+      color: #333;
+      padding: 5px 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .close-btn {
+      background-color: #ff4b4b;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .close-btn:hover {
+      background-color: #d63333;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>melbourne Business Finder</h1>
+
+  <!-- Search Bar -->
+  <input type="text" id="search-input" placeholder="Search by business name..." oninput="searchBusinesses()">
+
+  <!-- Category Filter -->
+  <select id="category-filter" onchange="filterByCategory()">
+    <option value="all">All Categories</option>
+  </select>
+
+  <!-- Add Business Button -->
+  <button id="add-business-btn">Add Business</button>
+
+  <!-- Business List -->
+  <div class="business-list" id="business-list"></div>
+</div>
+
+<!-- Modal for Adding Business -->
+<div id="add-business-modal" class="modal">
+  <div class="modal-content">
+    <h2>Add a Business</h2>
+    <form id="add-business-form">
+      <input type="text" id="business-name" placeholder="Business Name" required><br><br>
+
+      <!-- Dynamic Category Dropdown -->
+      <select id="business-category" required>
+        <option value="" disabled selected>Select Category</option>
+      </select><br><br>
+
+      <input type="text" id="business-address" placeholder="Address" required><br><br>
+      <input type="tel" id="business-phone" placeholder="Phone Number"><br><br>
+      <input type="text" id="business-hours" placeholder="Opening Hours"><br><br>
+      <button type="submit">Submit</button>
+    </form>
+    <button class="close-btn" id="close-modal">Close</button>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Fetch recent 10 businesses
+  async function fetchRecentBusinesses() {
+    let {data: businesses, error} = await supabaseClient
+            .from('melbourne_business')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+    if (error) {
+      console.error('Error fetching recent businesses:', error);
+    } else {
+      renderBusinessList(businesses);
+    }
+  }
+
+  // Function to fetch available categories and populate the dropdown
+  async function fetchCategories() {
+    let { data: categories, error } = await supabaseClient
+            .rpc('melbourne_businesses_by_category');
+
+    if (error) {
+      console.error('Error fetching categories:', error);
+    } else {
+      const categoryFilter = document.getElementById('category-filter');
+      const businessCategory = document.getElementById('business-category');
+
+      // Clear existing options
+      categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+      businessCategory.innerHTML = '<option value="" disabled selected>Select Category</option>';
+
+      // Populate category filter
+      categories.forEach(item => {
+        let filterOption = document.createElement('option');
+        filterOption.value = item.category;
+        filterOption.textContent = item.category;
+        categoryFilter.appendChild(filterOption);
+      });
+
+      // Populate business form category dropdown
+      categories.forEach(item => {
+        let businessOption = document.createElement('option');
+        businessOption.value = item.category;
+        businessOption.textContent = item.category;
+        businessCategory.appendChild(businessOption);
+      });
+    }
+  }
+
+  // Search businesses as user types in the search bar
+  async function searchBusinesses() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    let {data: businesses, error} = await supabaseClient
+            .from('melbourne_business')
+            .select('*')
+            .ilike('name', `%${query}%`)
+    ;
+    if (error) {
+      console.error('Error searching businesses:', error);
+    } else {
+      renderBusinessList(businesses);
+    }
+  }
+
+  // Filter businesses by category
+  // Filter businesses by category
+  async function filterByCategory() {
+    const category = document.getElementById('category-filter').value;
+
+    let businesses;
+    if (category === 'all') {
+      // If 'All Categories' is selected, fetch all businesses
+      let { data, error } = await supabaseClient
+              .from('melbourne_business')
+              .select('*');
+      if (error) {
+        console.error('Error fetching all businesses:', error);
+        return;
+      }
+      businesses = data;
+    } else {
+      // Otherwise, fetch businesses filtered by the selected category
+      let { data, error } = await supabaseClient
+              .from('melbourne_business')
+              .select('*')
+              .eq('category', category);
+      if (error) {
+        console.error('Error filtering by category:', error);
+        return;
+      }
+      businesses = data;
+    }
+
+    // Render the filtered businesses (or all businesses)
+    renderBusinessList(businesses);
+  }
+
+  function getMapsLink(address) {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    if (/android/i.test(userAgent)) {
+      // For Android devices
+      return `geo:0,0?q=${encodeURIComponent(address)}`;
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      // For iOS devices
+      return `comgooglemaps://?q=${encodeURIComponent(address)}`;
+    } else {
+      // Fallback for other devices (use web version)
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    }
+  }
+
+  // Render business list
+  function renderBusinessList(businesses) {
+    const businessList = document.getElementById('business-list');
+    businessList.innerHTML = '';
+    businesses.forEach(business => {
+      const mapsLink = getMapsLink(business.address); // Get the appropriate link for the address
+      const businessCard = `
+                <div class="business-card">
+               <div class="category-label" onclick="filterByCategory('${business.category}')">
+                            ${business.category}
+                  </div>
+                    <h2>${business.name}</h2>
+                    <p>
+                    <a class="map-link" href="${mapsLink}" target="_blank">
+                        ${business.address}
+                    </a>
+
+                    </p>
+                    <p><a class="phone-link" href="tel:${business.phone}">${business.phone}</a></p>
+                    <div class="opening-hours">
+                        <p><strong>Opening Hours:</strong> ${business.opening_hours}</p>
+                    </div>
+                </div>
+            `;
+      businessList.innerHTML += businessCard;
+    });
+  }
+
+  // Fetch businesses and categories on page load
+  fetchRecentBusinesses();
+  fetchCategories();
+
+  // Modal functionality
+  const modal = document.getElementById('add-business-modal');
+  const addBusinessBtn = document.getElementById('add-business-btn');
+  const closeModalBtn = document.getElementById('close-modal');
+
+  addBusinessBtn.onclick = function () {
+    modal.style.display = 'flex';
+  }
+
+  closeModalBtn.onclick = function () {
+    modal.style.display = 'none';
+  }
+
+  window.onclick = function (event) {
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // Insert new business into Supabase
+  document.getElementById('add-business-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const name = document.getElementById('business-name').value;
+    const category = document.getElementById('business-category').value;
+    const address = document.getElementById('business-address').value;
+    const phone = document.getElementById('business-phone').value;
+    const opening_hours = document.getElementById('business-hours').value;
+
+    let {data, error} = await supabaseClient.from('melbourne_business').insert([{
+      name,
+      category,
+      address,
+      phone,
+      opening_hours
+    }]);
+
+    if (error) {
+      console.error('Error adding business:', error);
+    } else {
+      modal.style.display = 'none';  // Close the modal
+      fetchRecentBusinesses();  // Refresh the business list
+    }
+  });
+</script>
+
+</body>
+</html>
