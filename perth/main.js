@@ -1,11 +1,13 @@
 const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_DB ='perth_business';
+const LOCATION ='perth';
 
 // Fetch recent 10 businesses
 async function fetchRecentBusinesses() {
     let {data: businesses, error} = await supabaseClient
-        .from('perth_business')
+        .from(SUPABASE_DB)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
@@ -19,7 +21,7 @@ async function fetchRecentBusinesses() {
 // Function to fetch available categories and populate the dropdown
 async function fetchCategories() {
     let { data: categories, error } = await supabaseClient
-        .rpc('perth_businesses_by_category');
+        .rpc(`${LOCATION}_businesses_by_category`);
 
     if (error) {
         console.error('Error fetching categories:', error);
@@ -136,7 +138,7 @@ window.onclick = function (event) {
 async function searchBusinesses() {
     const query = document.getElementById('search-input').value.toLowerCase();
     let {data: businesses, error} = await supabaseClient
-        .from('perth_business')
+        .from(SUPABASE_DB)
         .select('*')
         .ilike('name', `%${query}%`)
     ;
@@ -155,7 +157,7 @@ async function filterByCategory() {
     if (category === 'all') {
         // If 'All Categories' is selected, fetch all businesses
         let { data, error } = await supabaseClient
-            .from('perth_business')
+            .from(SUPABASE_DB)
             .select('*');
         if (error) {
             console.error('Error fetching all businesses:', error);
@@ -165,7 +167,7 @@ async function filterByCategory() {
     } else {
         // Otherwise, fetch businesses filtered by the selected category
         let { data, error } = await supabaseClient
-            .from('perth_business')
+            .from(SUPABASE_DB)
             .select('*')
             .eq('category', category);
         if (error) {
@@ -303,7 +305,7 @@ document.getElementById('add-business-form')
             }
         }
     }
-    let {data, error} = await supabaseClient.from('perth_business').insert([{
+    let {data, error} = await supabaseClient.from(SUPABASE_DB).insert([{
         name,
         category,
         address,
