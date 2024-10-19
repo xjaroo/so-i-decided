@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Finder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .business-card {
+            background-color: #fff;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .business-card h2 {
+            font-size: 22px;
+            margin: 0 0 5px;
+        }
+
+        .business-card p {
+            margin: 5px 0;
+        }
+
+        .category {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .phone-link, .map-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .phone-link:hover, .map-link:hover {
+            text-decoration: underline;
+        }
+
+        .business-list {
+            margin-top: 20px;
+        }
+
+        .business-list p {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .business-card h2 {
+                font-size: 18px;
+            }
+
+            input[type="text"], select {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Business Finder</h1>
+
+    <!-- Search Bar -->
+    <input type="text" id="search-input" placeholder="Search by business name..." oninput="filterList()">
+
+    <!-- Category Filter -->
+    <select id="category-filter" onchange="filterList()">
+        <option value="all">All Categories</option>
+        <option value="Cafe">Cafe</option>
+        <option value="Restaurant">Restaurant</option>
+        <option value="Professional">Professional</option>
+        <option value="Retail">Retail</option>
+    </select>
+
+    <!-- Business List -->
+    <div class="business-list" id="business-list">
+        <!-- Mock JSON Data will be listed here -->
+    </div>
+</div>
+
+<script>
+    // Mock JSON Data
+    const businessData = [
+        {
+            name: "The Coffee House",
+            category: "Cafe",
+            address: "123 Coffee Street, Sydney",
+            phone: "1234 567 890"
+        },
+        {
+            name: "Legal Eagles",
+            category: "Professional",
+            address: "456 Law Avenue, Sydney",
+            phone: "9876 543 210"
+        },
+        {
+            name: "The Gourmet Grill",
+            category: "Restaurant",
+            address: "789 Food Lane, Melbourne",
+            phone: "4567 123 456"
+        },
+        {
+            name: "Book Haven",
+            category: "Retail",
+            address: "321 Book Road, Brisbane",
+            phone: "3214 654 789"
+        },
+        {
+            name: "Sydney Consultancy",
+            category: "Professional",
+            address: "555 Market Street, Sydney",
+            phone: "0123 456 789"
+        }
+    ];
+
+    // Render business list
+    function renderBusinessList(filteredData) {
+        const businessList = document.getElementById('business-list');
+        businessList.innerHTML = ''; // Clear the list
+
+        if (filteredData.length === 0) {
+            businessList.innerHTML = '<p>No businesses found</p>';
+            return;
+        }
+
+        filteredData.forEach(business => {
+            const businessCard = `
+                <div class="business-card">
+                    <h2>${business.name}</h2>
+                    <p class="category">${business.category}</p>
+                    <p><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}" target="_blank">${business.address}</a></p>
+                    <p><a class="phone-link" href="tel:${business.phone.replace(/\s/g, '')}">${business.phone}</a></p>
+                </div>
+            `;
+            businessList.innerHTML += businessCard;
+        });
+    }
+
+    // Filter and search functionality
+    function filterList() {
+        const searchInput = document.getElementById('search-input').value.toLowerCase();
+        const categoryFilter = document.getElementById('category-filter').value;
+
+        const filteredData = businessData.filter(business => {
+            const isNameMatch = business.name.toLowerCase().includes(searchInput);
+            const isCategoryMatch = categoryFilter === 'all' || business.category === categoryFilter;
+            return isNameMatch && isCategoryMatch;
+        });
+
+        renderBusinessList(filteredData);
+    }
+
+    // Initial render of all businesses
+    renderBusinessList(businessData);
+</script>
+
+</body>
+</html>
