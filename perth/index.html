@@ -3,195 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Finder</title>
+    <title>Perth Business Finder</title>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+
     <style>
+        /* Add your styles here */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            background-color: #f5f7fa;
+            color: #333;
         }
 
         .container {
             max-width: 600px;
-            margin: 0 auto;
+            margin: 20px auto;
             padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             font-size: 28px;
             text-align: center;
             margin-bottom: 20px;
+            color: #2b3e50;
         }
 
         input[type="text"], select {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
-            border: 1px solid #ccc;
+            border: 1px solid #d0d7df;
             border-radius: 4px;
             box-sizing: border-box;
             font-size: 16px;
+            background-color: #f9fafc;
+            color: #333;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        button:hover {
+            background-color: #0056b3;
         }
 
         .business-card {
-            background-color: #fff;
+            background-color: #ffffff;
             margin: 10px 0;
-            padding: 15px;
-            border-radius: 6px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.3s ease-in-out;
         }
 
-        .business-card h2 {
-            font-size: 22px;
-            margin: 0 0 5px;
+        .business-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
-        .business-card p {
-            margin: 5px 0;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
         }
 
-        .category {
-            color: #ffcc00;
-            font-weight: bold;
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 100%;
         }
 
-        .phone-link, .map-link {
-            color: #007bff;
-            text-decoration: none;
+        .close-btn {
+            background-color: #ff4b4b;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
         }
 
-        .phone-link:hover, .map-link:hover {
-            text-decoration: underline;
-        }
-
-        .business-list {
-            margin-top: 20px;
-        }
-
-        .business-list p {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        @media (max-width: 600px) {
-            body {
-                font-size: 14px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .business-card h2 {
-                font-size: 18px;
-            }
-
-            input[type="text"], select {
-                font-size: 14px;
-            }
+        .close-btn:hover {
+            background-color: #d63333;
         }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h1>Business Finder</h1>
+    <h1>Perth Business Finder</h1>
 
     <!-- Search Bar -->
-    <input type="text" id="search-input" placeholder="Search by business name..." oninput="filterList()">
+    <input type="text" id="search-input" placeholder="Search by business name..." oninput="searchBusinesses()">
 
     <!-- Category Filter -->
-    <select id="category-filter" onchange="filterList()">
+    <select id="category-filter" onchange="filterByCategory()">
         <option value="all">All Categories</option>
-        <option value="Cafe">Cafe</option>
-        <option value="Restaurant">Restaurant</option>
-        <option value="Professional">Professional</option>
-        <option value="Retail">Retail</option>
     </select>
 
+    <!-- Add Business Button -->
+    <button id="add-business-btn">Add Business</button>
+
     <!-- Business List -->
-    <div class="business-list" id="business-list">
-        <!-- Mock JSON Data will be listed here -->
+    <div class="business-list" id="business-list"></div>
+</div>
+
+<!-- Modal for Adding Business -->
+<div id="add-business-modal" class="modal">
+    <div class="modal-content">
+        <h2>Add a Business</h2>
+        <form id="add-business-form">
+            <input type="text" id="business-name" placeholder="Business Name" required><br><br>
+
+            <!-- Dynamic Category Dropdown -->
+            <select id="business-category" required>
+                <option value="" disabled selected>Select Category</option>
+            </select><br><br>
+
+            <input type="text" id="business-address" placeholder="Address" required><br><br>
+            <input type="tel" id="business-phone" placeholder="Phone Number"><br><br>
+            <input type="text" id="business-hours" placeholder="Opening Hours"><br><br>
+            <button type="submit">Submit</button>
+        </form>
+        <button class="close-btn" id="close-modal">Close</button>
     </div>
 </div>
 
 <script>
-    // Mock JSON Data
-    const businessData = [
-        {
-            name: "The Coffee House",
-            category: "Cafe",
-            address: "123 Coffee Street, Sydney",
-            phone: "1234 567 890"
-        },
-        {
-            name: "Legal Eagles",
-            category: "Professional",
-            address: "456 Law Avenue, Sydney",
-            phone: "9876 543 210"
-        },
-        {
-            name: "The Gourmet Grill",
-            category: "Restaurant",
-            address: "789 Food Lane, Melbourne",
-            phone: "4567 123 456"
-        },
-        {
-            name: "Book Haven",
-            category: "Retail",
-            address: "321 Book Road, Brisbane",
-            phone: "3214 654 789"
-        },
-        {
-            name: "Sydney Consultancy",
-            category: "Professional",
-            address: "555 Market Street, Sydney",
-            phone: "0123 456 789"
+    const SUPABASE_URL = 'https://jlczxwwoujhzvdwmcucp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsY3p4d3dvdWpoenZkd21jdWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg5MTEzNDgsImV4cCI6MjA0NDQ4NzM0OH0.xQ_EDCcsxso91JXY4-E3BeAdwliTnxRPmnQ5PWZHu4k';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Fetch recent 10 businesses
+    async function fetchRecentBusinesses() {
+        let {data: businesses, error} = await supabaseClient
+            .from('perth_business')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+        if (error) {
+            console.error('Error fetching recent businesses:', error);
+        } else {
+            renderBusinessList(businesses);
         }
-    ];
+    }
+
+    // Function to fetch available categories and populate the dropdown
+    async function fetchCategories() {
+        let {data: categories, error} = await supabaseClient.rpc('group_businesses_by_category');
+        if (error) {
+            console.error('Error fetching categories:', error);
+        } else {
+            const categoryFilter = document.getElementById('category-filter');
+            categories.forEach(item => {
+                let filterOption = document.createElement('option');
+                filterOption.value = item.category;
+                filterOption.textContent = item.category;
+                categoryFilter.appendChild(filterOption);
+            });
+        }
+    }
+
+    // Search businesses as user types in the search bar
+    async function searchBusinesses() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        let {data: businesses, error} = await supabaseClient
+            .from('perth_business')
+            .select('*')
+            .ilike('name', `%${query}%`);
+        if (error) {
+            console.error('Error searching businesses:', error);
+        } else {
+            renderBusinessList(businesses);
+        }
+    }
+
+    // Filter businesses by category
+    async function filterByCategory() {
+        const category = document.getElementById('category-filter').value;
+        let {data: businesses, error} = await supabaseClient
+            .from('perth_business')
+            .select('*')
+            .eq('category', category);
+        if (error) {
+            console.error('Error filtering by category:', error);
+        } else {
+            renderBusinessList(businesses);
+        }
+    }
 
     // Render business list
-    function renderBusinessList(filteredData) {
+    function renderBusinessList(businesses) {
         const businessList = document.getElementById('business-list');
-        businessList.innerHTML = ''; // Clear the list
-
-        if (filteredData.length === 0) {
-            businessList.innerHTML = '<p>No businesses found</p>';
-            return;
-        }
-
-        filteredData.forEach(business => {
+        businessList.innerHTML = '';
+        businesses.forEach(business => {
             const businessCard = `
                 <div class="business-card">
                     <h2>${business.name}</h2>
                     <p class="category">${business.category}</p>
                     <p><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}" target="_blank">${business.address}</a></p>
-                    <p><a class="phone-link" href="tel:${business.phone.replace(/\s/g, '')}">${business.phone}</a></p>
+                    <p><a class="phone-link" href="tel:${business.phone}">${business.phone}</a></p>
+                    <div class="opening-hours">
+                        <p><strong>Opening Hours:</strong> ${business.opening_hours}</p>
+                    </div>
                 </div>
             `;
             businessList.innerHTML += businessCard;
         });
     }
 
-    // Filter and search functionality
-    function filterList() {
-        const searchInput = document.getElementById('search-input').value.toLowerCase();
-        const categoryFilter = document.getElementById('category-filter').value;
+    // Fetch businesses and categories on page load
+    fetchRecentBusinesses();
+    fetchCategories();
 
-        const filteredData = businessData.filter(business => {
-            const isNameMatch = business.name.toLowerCase().includes(searchInput);
-            const isCategoryMatch = categoryFilter === 'all' || business.category === categoryFilter;
-            return isNameMatch && isCategoryMatch;
-        });
+    // Modal functionality
+    const modal = document.getElementById('add-business-modal');
+    const addBusinessBtn = document.getElementById('add-business-btn');
+    const closeModalBtn = document.getElementById('close-modal');
 
-        renderBusinessList(filteredData);
+    addBusinessBtn.onclick = function () {
+        modal.style.display = 'flex';
     }
 
-    // Initial render of all businesses
-    renderBusinessList(businessData);
+    closeModalBtn.onclick = function () {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Insert new business into Supabase
+    document.getElementById('add-business-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const name = document.getElementById('business-name').value;
+        const category = document.getElementById('business-category').value;
+        const address = document.getElementById('business-address').value;
+        const phone = document.getElementById('business-phone').value;
+        const opening_hours = document.getElementById('business-hours').value;
+
+        let {data, error} = await supabaseClient.from('perth_business').insert([{
+            name,
+            category,
+            address,
+            phone,
+            opening_hours
+        }]);
+
+        if (error) {
+            console.error('Error adding business:', error);
+        } else {
+            modal.style.display = 'none';  // Close the modal
+            fetchRecentBusinesses();  // Refresh the business list
+        }
+    });
 </script>
 
 </body>
