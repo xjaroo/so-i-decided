@@ -18,9 +18,8 @@
             max-width: 600px;
             margin: 20px auto;
             padding: 20px;
+            box-sizing: border-box;
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
@@ -168,19 +167,33 @@
 
     // Function to fetch available categories and populate the dropdown
     async function fetchCategories() {
-        let {data: categories, error} = await supabaseClient.rpc('group_businesses_by_category');
+        let { data: categories, error } = await supabaseClient
+            .rpc('group_businesses_by_category');
+
         if (error) {
             console.error('Error fetching categories:', error);
         } else {
             const categoryFilter = document.getElementById('category-filter');
             const businessCategory = document.getElementById('business-category');
 
+            // Clear existing options
+            categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+            businessCategory.innerHTML = '<option value="" disabled selected>Select Category</option>';
+
+            // Populate category filter
             categories.forEach(item => {
                 let filterOption = document.createElement('option');
                 filterOption.value = item.category;
                 filterOption.textContent = item.category;
                 categoryFilter.appendChild(filterOption);
-                businessCategory.appendChild(filterOption);
+            });
+
+            // Populate business form category dropdown
+            categories.forEach(item => {
+                let businessOption = document.createElement('option');
+                businessOption.value = item.category;
+                businessOption.textContent = item.category;
+                businessCategory.appendChild(businessOption);
             });
         }
     }
@@ -191,7 +204,8 @@
         let {data: businesses, error} = await supabaseClient
             .from('perth_business')
             .select('*')
-            .ilike('name', `%${query}%`);
+            .ilike('name', `%${query}%`)
+        ;
         if (error) {
             console.error('Error searching businesses:', error);
         } else {
@@ -200,18 +214,38 @@
     }
 
     // Filter businesses by category
+    // Filter businesses by category
     async function filterByCategory() {
         const category = document.getElementById('category-filter').value;
-        let {data: businesses, error} = await supabaseClient
-            .from('perth_business')
-            .select('*')
-            .eq('category', category);
-        if (error) {
-            console.error('Error filtering by category:', error);
+
+        let businesses;
+        if (category === 'all') {
+            // If 'All Categories' is selected, fetch all businesses
+            let { data, error } = await supabaseClient
+                .from('perth_business')
+                .select('*');
+            if (error) {
+                console.error('Error fetching all businesses:', error);
+                return;
+            }
+            businesses = data;
         } else {
-            renderBusinessList(businesses);
+            // Otherwise, fetch businesses filtered by the selected category
+            let { data, error } = await supabaseClient
+                .from('perth_business')
+                .select('*')
+                .eq('category', category);
+            if (error) {
+                console.error('Error filtering by category:', error);
+                return;
+            }
+            businesses = data;
         }
+
+        // Render the filtered businesses (or all businesses)
+        renderBusinessList(businesses);
     }
+
 
     // Render business list
     function renderBusinessList(businesses) {
