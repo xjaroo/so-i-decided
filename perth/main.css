@@ -164,7 +164,7 @@ button:hover {
     position: absolute;
     top: 20px;
     right: 20px;
-    font-size: 30px;
+    font-size: 80px;
     color: white; /* Adjust based on your design */
     cursor: pointer;
     z-index: 99999;
@@ -207,3 +207,4 @@ button:hover {
 #add-business-modal .close-btn:hover {
     background-color: #d63333;
 }
+

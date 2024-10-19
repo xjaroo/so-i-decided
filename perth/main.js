@@ -208,7 +208,7 @@ async function renderBusinessList(businesses) {
             for (const image_url of business.image_urls) {
                 const { data } = supabaseClient.storage.from('business-images').getPublicUrl(image_url);
                 const url = data.publicUrl; // Get the public URL
-                imageThumbnails += `<img src="${url}" alt="Business Thumbnail" style="max-width:150px; cursor:pointer" onclick='showImageCarousel(${JSON.stringify(business.image_urls)})'>`;
+                imageThumbnails += `<img src="${url}" alt="Business Thumbnail" style="max-width:150px;max-height:100px; cursor:pointer" onclick='showImageCarousel(${JSON.stringify(business.image_urls)})'>`;
             }
         }
 
@@ -274,7 +274,8 @@ async function uploadSingleImage(imageFile) {
 }
 
 // Insert new business into Supabase
-document.getElementById('add-business-form').addEventListener('submit', async function (event) {
+document.getElementById('add-business-form')
+    .addEventListener('submit', async function (event) {
     event.preventDefault();
     const name = document.getElementById('business-name').value;
     let category = document.getElementById('business-category').value;
@@ -318,3 +319,4 @@ document.getElementById('add-business-form').addEventListener('submit', async fu
         fetchRecentBusinesses();  // Refresh the business list
     }
 });
+
