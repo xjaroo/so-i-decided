@@ -272,7 +272,12 @@
                             ${business.category}
                   </div>
                     <h2>${business.name}</h2>
-                    <p><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address)}" target="_blank">${business.address}</a></p>
+                    <p>
+                    <a class="map-link" href="comgooglemaps://?q=${encodeURIComponent(business.address)}" target="_blank">
+                        ${business.address}
+                    </a>
+
+                    </p>
                     <p><a class="phone-link" href="tel:${business.phone}">${business.phone}</a></p>
                     <div class="opening-hours">
                         <p><strong>Opening Hours:</strong> ${business.opening_hours}</p>
