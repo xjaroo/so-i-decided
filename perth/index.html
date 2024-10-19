@@ -150,6 +150,10 @@
             <select id="business-category" required>
                 <option value="" disabled selected>Select Category</option>
             </select><br><br>
+            <span>OR</span>
+            <!-- New Category Input -->
+            <input type="text" id="new-category" placeholder="Add New Category"><br><br>
+
 
             <input type="text" id="business-address" placeholder="Address" required><br><br>
             <input type="tel" id="business-phone" placeholder="Phone Number"><br><br>
@@ -330,11 +334,19 @@
     document.getElementById('add-business-form').addEventListener('submit', async function (event) {
         event.preventDefault();
         const name = document.getElementById('business-name').value;
-        const category = document.getElementById('business-category').value;
+        let category = document.getElementById('business-category').value;
+        const newCategory = document.getElementById('new-category').value;
+
         const address = document.getElementById('business-address').value;
         const phone = document.getElementById('business-phone').value;
         const opening_hours = document.getElementById('business-hours').value;
 
+        if(newCategory){
+            category=newCategory;
+        }
+        if(!newCategory && !category) {
+            category='Etc';
+        }
         let {data, error} = await supabaseClient.from('perth_business').insert([{
             name,
             category,
