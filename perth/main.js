@@ -3,7 +3,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const SUPABASE_DB ='perth_business';
 const LOCATION ='perth';
+const capitalizedLocation = LOCATION.charAt(0).toUpperCase() + LOCATION.slice(1)
 
+const heading = document.querySelector('.container h1');
+
+heading.textContent = `${capitalizedLocation} Business Finder v1.3`;
 // Fetch recent 10 businesses
 async function fetchRecentBusinesses() {
     let {data: businesses, error} = await supabaseClient
