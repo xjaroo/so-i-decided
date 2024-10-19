@@ -7,13 +7,11 @@
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
 
     <style>
-        /* Add your styles here */
-        body {
-            font-family: 'Arial', sans-serif;
+        html, body {
             margin: 0;
             padding: 0;
-            background-color: #f5f7fa;
-            color: #333;
+            height: 100%; /* Full height for both html and body */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
 
         .container {
@@ -175,11 +173,14 @@
             console.error('Error fetching categories:', error);
         } else {
             const categoryFilter = document.getElementById('category-filter');
+            const businessCategory = document.getElementById('business-category');
+
             categories.forEach(item => {
                 let filterOption = document.createElement('option');
                 filterOption.value = item.category;
                 filterOption.textContent = item.category;
                 categoryFilter.appendChild(filterOption);
+                businessCategory.appendChild(filterOption);
             });
         }
     }
