@@ -260,12 +260,27 @@
         renderBusinessList(businesses);
     }
 
+    function getMapsLink(address) {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+        if (/android/i.test(userAgent)) {
+            // For Android devices
+            return `geo:0,0?q=${encodeURIComponent(address)}`;
+        } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+            // For iOS devices
+            return `comgooglemaps://?q=${encodeURIComponent(address)}`;
+        } else {
+            // Fallback for other devices (use web version)
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+        }
+    }
 
     // Render business list
     function renderBusinessList(businesses) {
         const businessList = document.getElementById('business-list');
         businessList.innerHTML = '';
         businesses.forEach(business => {
+            const mapsLink = getMapsLink(business.address); // Get the appropriate link for the address
             const businessCard = `
                 <div class="business-card">
                <div class="category-label" onclick="filterByCategory('${business.category}')">
@@ -273,7 +288,7 @@
                   </div>
                     <h2>${business.name}</h2>
                     <p>
-                    <a class="map-link" href="comgooglemaps://?q=${encodeURIComponent(business.address)}" target="_blank">
+                    <a class="map-link" href="${mapsLink}" target="_blank">
                         ${business.address}
                     </a>
 
