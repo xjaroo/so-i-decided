@@ -161,9 +161,9 @@ button:hover {
 }
 
 .close-btn {
-    position: absolute;
+    position: fixed;
     top: 50px;
-    right: 20px;
+    right: 30px;
     font-size: 80px;
     color: white; /* Adjust based on your design */
     cursor: pointer;
