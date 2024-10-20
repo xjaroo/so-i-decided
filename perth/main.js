@@ -7,7 +7,7 @@ const capitalizedLocation = LOCATION.charAt(0).toUpperCase() + LOCATION.slice(1)
 
 const heading = document.querySelector('.container h1');
 
-heading.textContent = `${capitalizedLocation} Business Finder v1.5`;
+heading.textContent = `${capitalizedLocation} Business Finder v1.6`;
 // Fetch recent 10 businesses
 async function fetchRecentBusinesses() {
     let {data: businesses, error} = await supabaseClient
