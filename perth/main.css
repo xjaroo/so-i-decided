@@ -210,7 +210,7 @@ button:hover {
 
 @media (max-width: 480px) {
     .close-btn {
-        font-size: 24px; /* Smaller size for smaller screens */
+        font-size: 80px; /* Smaller size for smaller screens */
         top: 15px; /* Adjust position */
         right: 15px; /* Adjust position */
     }
