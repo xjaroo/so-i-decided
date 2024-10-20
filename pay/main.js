@@ -18,6 +18,13 @@ document.getElementById('salary-form').addEventListener('submit', function(event
         { threshold: Infinity, rate: 0.45, baseTax: 51637 }
     ];
 
+    const frequencyMonth = [
+        {frequency: 'annually', frequencyMultiplier : 1},
+        {frequency: 'monthly', frequencyMultiplier : 12},
+        {frequency: 'fortnightly', frequencyMultiplier : 26},
+        {frequency: 'weekly', frequencyMultiplier : 52},
+    ];
+
     let baseSalary, superannuation;
 
     if (includesSuper) {
@@ -33,8 +40,13 @@ document.getElementById('salary-form').addEventListener('submit', function(event
         annualSalary * superannuationRate;
 
     // Calculate Taxable Income
-    const taxableIncome = baseSalary;
+    let taxableIncome = baseSalary;
 
+
+    function getFrequencyMultiplier(payFrequency) {
+        const found = frequencyMonth.find(x => x.frequency === payFrequency);
+        return found.frequencyMultiplier;
+    }
 
     function calculateLITO(taxableIncome) {
         let lito = 0;
@@ -134,44 +146,25 @@ document.getElementById('salary-form').addEventListener('submit', function(event
 
     const threshold = incomeTaxBrackets[taxRate.index -1].threshold;
     // Calculate Total Income Tax
-    let totalIncomeTax = taxRate.bracket.baseTax + (taxableIncome - threshold)*taxRate.bracket.rate ;
+
+    const frequencyMultiplier = getFrequencyMultiplier(payFrequency);
+    let totalIncomeTax = (taxRate.bracket.baseTax/frequencyMultiplier) +
+        (((taxableIncome - threshold)*taxRate.bracket.rate)/frequencyMultiplier) ;
 
 
     // Calculate Medicare Levy
-    const medicareLevy = calculateMedicareLevy(taxableIncome, true, false);
-
+    let medicareLevy = calculateMedicareLevy(taxableIncome, true, false) / frequencyMultiplier;
+    superannuation = superannuation / frequencyMultiplier;
     // Division 293 Tax (additional tax on super)
-    const division293Tax = taxableIncome > 250000 ? superannuation * 0.15 : 0;
+    let division293Tax = taxableIncome > 250000 ? superannuation * 0.15 : 0;
 
-    const lowIncomeTaxOffset  = calculateLITO(taxableIncome);
+    let lowIncomeTaxOffset  = payFrequency === 'annually' ? calculateLITO(taxableIncome) : 0;
     // Total Tax Payable
-    const totalTaxPayable = totalIncomeTax + medicareLevy + division293Tax - lowIncomeTaxOffset;
+    let totalTaxPayable = totalIncomeTax + medicareLevy + division293Tax - lowIncomeTaxOffset;
 
-    // Calculate Salary Per Pay Period
-    let salaryPerPeriod;
-    let frequencyMultiplier;
-    switch (payFrequency) {
-        case 'monthly':
-            salaryPerPeriod = (taxableIncome / 12).toFixed(2);
-            frequencyMultiplier=12;
-            break;
-        case 'fortnightly':
-            salaryPerPeriod = (taxableIncome / 26).toFixed(2);
-            frequencyMultiplier=26;
-            break;
-        case 'weekly':
-            salaryPerPeriod = (taxableIncome / 52).toFixed(2);
-            frequencyMultiplier=52;
-            break;
-        case 'annually':
-            salaryPerPeriod = annualSalary.toFixed(2); // Directly use the annual salary
-            frequencyMultiplier=1;
-            break;
-        default:
-            salaryPerPeriod = (taxableIncome / 1).toFixed(2);
-    }
+    taxableIncome= taxableIncome/frequencyMultiplier;
 
-    const netSalaryAfterTax = (salaryPerPeriod - (totalTaxPayable / frequencyMultiplier)).toFixed(2);
+    const netSalaryAfterTax = (taxableIncome-totalTaxPayable ).toFixed(2);
 
     function formatNumberWithCommas(num) {
         return '$ '+Number(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -200,7 +193,7 @@ document.getElementById('salary-form').addEventListener('submit', function(event
                 <td class="dollar">${formatNumberWithCommas(taxableIncome)}</td>
             </tr>
             <tr>
-                <td>Total Income Tax</td>
+                <td>Income Tax</td>
                 <td class="dollar">${formatNumberWithCommas(totalIncomeTax)}</td>
             </tr>
             <tr>
