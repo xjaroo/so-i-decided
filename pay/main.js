@@ -1,3 +1,14 @@
+
+const p25 = 42000;
+const p50 = 83000;
+const p75 = 110000;
+
+const incomeRange= document.getElementById('income-range');
+incomeRange.style.display = 'none';
+
+
+
+
 document.getElementById('salary-form').addEventListener('submit', function(event) {
     event.preventDefault();
 
@@ -171,6 +182,17 @@ document.getElementById('salary-form').addEventListener('submit', function(event
     }
 
 
+    if(taxableIncome){
+        const position = ((taxableIncome - p25) / (p75 - p25)) * 100;
+
+        document.querySelector('.salary-indicator').style.left = `${position}%`;
+        document.getElementById('triangle').style.left = `${position}%`;
+        incomeRange.style.display = 'flex';
+    }else{
+        incomeRange.style.display = 'none';
+    }
+
+
     // Display Results
     const resultHTML = `
         <h2>Summary</h2>
@@ -230,3 +252,5 @@ document.getElementById('salary-form').addEventListener('submit', function(event
 
     document.getElementById('result').innerHTML = resultHTML;
 });
+
+

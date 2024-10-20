@@ -24,6 +24,11 @@ h1 {
     color: #333;
 }
 
+h2 {
+    text-align: center;
+    color: #333;
+    padding-bottom: 10px;
+}
 .form-group {
     margin-bottom: 15px;
 }
@@ -113,4 +118,59 @@ tr:hover {
 .ask-me {
     font-size: 13px;
     padding-bottom: 10px;
+}
+
+.box-plot-container {
+    display: flex;  /* Use flexbox */
+    flex-direction: column;  /* Stack children vertically */
+    padding-top: 20px;
+    font-size: 12px;
+}
+.box-plot {
+    position: relative;
+    width: 100%;
+    height: 10px;
+    background: linear-gradient(to right, #ffcc80, #ffc107);
+    /*border: 2px solid #000;*/
+    margin-bottom: 20px;
+}
+
+.box {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.p25, .median, .p75, .salary-indicator {
+    position: absolute;
+    bottom: 100%;
+    transform: translateX(-50%);
+}
+
+.p25 {
+    left: 20%; /* Approximate position for P25 */
+}
+
+.median {
+    left: 50%; /* Median position */
+}
+
+.p75 {
+    left: 80%; /* Approximate position for P75 */
+}
+
+.salary-indicator {
+    left: 25%; /* Position for $60,000 */
+}
+
+.triangle {
+    position: absolute;
+    bottom: 100%;
+    top:11px;
+    left: 25%; /* Adjust according to the salary */
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid red; /* Indicator color */
 }
