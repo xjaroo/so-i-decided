@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="main.css">
+  <title>Salary Calculator</title>
+</head>
+<body>
+<div class="container">
+  <h1>Salary Calculator</h1>
+  <form id="salary-form">
+    <div class="form-group">
+      <label for="annual-salary">Annual Salary (AUD):</label>
+      <input type="number" id="annual-salary" value="256493" required>
+    </div>
+
+    <div class="form-group">
+      <label for="pay-frequency">Pay Frequency:</label>
+      <select id="pay-frequency">
+        <option value="annually">Annually</option> <!-- New option added here -->
+        <option value="monthly">Monthly</option>
+        <option value="fortnightly">Fortnightly</option>
+        <option value="weekly">Weekly</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="includes-super"> Salary includes Superannuation
+      </label>
+    </div>
+
+    <button type="submit">Calculate</button>
+  </form>
+
+
+  <div id="result"></div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
