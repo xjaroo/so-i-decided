@@ -28,11 +28,37 @@ document.getElementById('salary-form').addEventListener('submit', function(event
     }
 
     // Calculate Superannuation
-    superannuation = baseSalary * superannuationRate;
+    superannuation = includesSuper ?
+        annualSalary - (annualSalary*superannuationRate) :
+        annualSalary * superannuationRate;
 
     // Calculate Taxable Income
-    const taxableIncome = includesSuper ? annualSalary : annualSalary + superannuation;
+    const taxableIncome = baseSalary;
 
+
+    function calculateLITO(taxableIncome) {
+        let lito = 0;
+
+        // Maximum LITO for income up to $37,500
+        if (taxableIncome <= 37500) {
+            lito = 700; // Maximum offset
+        }
+        // Gradual reduction for incomes between $37,501 and $45,000
+        else if (taxableIncome > 37500 && taxableIncome <= 45000) {
+            lito = 700 - ((taxableIncome - 37500) * 0.05); // Reduces by 5 cents for every dollar over $37,500
+        }
+        // Further reduction for incomes between $45,001 and $66,667
+        else if (taxableIncome > 45000 && taxableIncome <= 66667) {
+            lito = 325 - ((taxableIncome - 45000) * 0.015); // Reduces by 1.5% for every dollar over $45,000
+        }
+        // No LITO for incomes above $66,667
+        else {
+            lito = 0; // No offset applicable
+        }
+
+        // Ensure LITO does not go below zero
+        return Math.max(lito, 0);
+    }
 
     function calculateMedicareLevy(taxableIncome, isSingle, hasPrivateHealthInsurance) {
         const medicareLevyRate = 0.02; // 2%
@@ -89,8 +115,8 @@ document.getElementById('salary-form').addEventListener('submit', function(event
             // If income is less than the current threshold, return the previous index
             if (taxableIncome < incomeTaxBrackets[i].threshold) {
                 return {
-                    index: i > 0 ? i - 1 : i,
-                    bracket: i > 0 ? incomeTaxBrackets[i - 1] : incomeTaxBrackets[i]
+                    index: i,
+                    bracket: incomeTaxBrackets[i]
                 };
             }
         }
@@ -106,20 +132,20 @@ document.getElementById('salary-form').addEventListener('submit', function(event
 
     const taxRate = findTaxBracketIndex(taxableIncome);
 
-    const threshold = taxRate.index === 4
-        ? incomeTaxBrackets[taxRate.index -1].threshold : incomeTaxBrackets[taxRate.index].threshold || 0;
+    const threshold = incomeTaxBrackets[taxRate.index -1].threshold;
     // Calculate Total Income Tax
     let totalIncomeTax = taxRate.bracket.baseTax + (taxableIncome - threshold)*taxRate.bracket.rate ;
 
 
     // Calculate Medicare Levy
-    const medicareLevy = calculateMedicareLevy(taxableIncome, true, true);
+    const medicareLevy = calculateMedicareLevy(taxableIncome, true, false);
 
     // Division 293 Tax (additional tax on super)
     const division293Tax = taxableIncome > 250000 ? superannuation * 0.15 : 0;
 
+    const lowIncomeTaxOffset  = calculateLITO(taxableIncome);
     // Total Tax Payable
-    const totalTaxPayable = totalIncomeTax + medicareLevy + division293Tax;
+    const totalTaxPayable = totalIncomeTax + medicareLevy + division293Tax - lowIncomeTaxOffset;
 
     // Calculate Salary Per Pay Period
     let salaryPerPeriod;
@@ -148,8 +174,9 @@ document.getElementById('salary-form').addEventListener('submit', function(event
     const netSalaryAfterTax = (salaryPerPeriod - (totalTaxPayable / frequencyMultiplier)).toFixed(2);
 
     function formatNumberWithCommas(num) {
-        return Number(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return '$ '+Number(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
+
 
     // Display Results
     const resultHTML = `
@@ -162,35 +189,48 @@ document.getElementById('salary-form').addEventListener('submit', function(event
            
             <tr>
                 <td>Base Salary</td>
-                <td>${formatNumberWithCommas(baseSalary)} </td>
+                <td class="dollar">${formatNumberWithCommas(baseSalary)} </td>
             </tr>
             <tr>
                 <td>Superannuation</td>
-                <td>${formatNumberWithCommas(superannuation)}</td>
+                <td class="dollar">${formatNumberWithCommas(superannuation)}</td>
             </tr>
             <tr>
                 <td>Taxable Income</td>
-                <td>${formatNumberWithCommas(taxableIncome)}</td>
+                <td class="dollar">${formatNumberWithCommas(taxableIncome)}</td>
             </tr>
             <tr>
                 <td>Total Income Tax</td>
-                <td>${formatNumberWithCommas(totalIncomeTax)}</td>
+                <td class="dollar">${formatNumberWithCommas(totalIncomeTax)}</td>
             </tr>
             <tr>
                 <td>Medicare Levy</td>
-                <td>${formatNumberWithCommas(medicareLevy)}</td>
+                <td class="dollar">${formatNumberWithCommas(medicareLevy)}</td>
             </tr>
-            <tr>
+            
+            ${division293Tax > 0 ?
+            `<tr>
                 <td>Division 293 Tax</td>
-                <td>${formatNumberWithCommas(division293Tax)}</td>
-            </tr>
+                <td class="dollar">${formatNumberWithCommas(division293Tax)}</td>
+            </tr>`
+            :''
+            }
+            
+            ${lowIncomeTaxOffset > 0 ?
+            `<tr>
+                    <td>Low Income Tax Offset</td>
+                    <td class="dollar"> -${formatNumberWithCommas(lowIncomeTaxOffset)}</td>
+                </tr>`
+            :''
+            }
+            
             <tr>
                 <td>Total Tax Payable</td>
-                <td>${formatNumberWithCommas(totalTaxPayable)}</td>
+                <td class="dollar">${formatNumberWithCommas(totalTaxPayable)}</td>
             </tr>
-            <tr>
+            <tr class="net-salary">
                 <td>Salary After Tax</td>
-                <td>${formatNumberWithCommas(netSalaryAfterTax)}</td>
+                <td class="dollar">${formatNumberWithCommas(netSalaryAfterTax)}</td>
             </tr>
         </table>
     `;

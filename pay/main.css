@@ -95,10 +95,18 @@ th, td {
     border: 1px solid #ddd;
 }
 
+.dollar {
+    padding-right: 10px;
+    text-align: right;
+}
 th {
     background-color: #f8f9fa;
 }
 
 tr:hover {
     background-color: #f1f1f1;
+}
+
+.net-salary {
+    background-color: aliceblue;
 }
