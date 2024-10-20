@@ -174,3 +174,11 @@ tr:hover {
     border-right: 10px solid transparent;
     border-bottom: 10px solid red; /* Indicator color */
 }
+
+
+@media (max-width: 480px) {
+    table {
+        font-size: 14px; /* Smaller size for smaller screens */
+
+    }
+}
