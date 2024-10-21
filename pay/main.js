@@ -47,7 +47,7 @@ document.getElementById('salary-form').addEventListener('submit', function(event
 
     // Calculate Superannuation
     superannuation = includesSuper ?
-        annualSalary - (annualSalary*superannuationRate) :
+        annualSalary/ (1+superannuationRate)*superannuationRate :
         annualSalary * superannuationRate;
 
     // Calculate Taxable Income
