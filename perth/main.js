@@ -263,10 +263,12 @@ window.onclick = function (event) {
 }
 
 async function uploadSingleImage(imageFile) {
+    const sanitizedFileName = imageFile.name.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
+
     const { data, error } = await supabaseClient
         .storage
         .from('business-images')
-        .upload(`${Date.now()}_${imageFile.name}`, imageFile, {
+        .upload(`${Date.now()}_${sanitizedFileName}`, imageFile, {
             cacheControl: '3600',
             upsert: false
         });
