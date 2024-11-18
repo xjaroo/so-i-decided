@@ -95,78 +95,56 @@
     <div class="title">Home Loans Calculator</div>
 
     <div class="input-group">
-        <label for="property-price">Property price</label>
-        <input type="number" id="property-price" value="380000">
-        <div class="small-text">Suburb median: $380,000</div>
+        <label for="loan-amount">Loan amount</label>
+        <input type="number" id="loan-amount" value="600000">
     </div>
-
+    
     <div class="input-group">
-        <label for="savings">Your savings</label>
-        <input type="number" id="savings" value="320000">
+        <label for="interest-rate">Interest Rate (%)</label>
+        <input type="number" id="interest-rate" value="6" step="0.01">
     </div>
-
+    
+    <div class="input-group">
+        <label for="loan-period">Loan Period (years)</label>
+        <input type="number" id="loan-period" value="30">
+    </div>
+    
     <div class="output-group">
-        <h3 id="estimated-repayments">$207 per fortnight</h3>
-        <p>Stamp duty: <span id="stamp-duty">$12,065</span></p>
-        <p>Transfer fee: <span id="transfer-fee">$258</span></p>
-        <p>Government fees: <span id="government-fees">$188</span></p>
-        <p>LMI: <span id="lmi-cost">$0</span></p>
-        <p>Available deposit: <span id="available-deposit">$307,489</span></p>
-        <p>Loan amount: <span id="loan-amount">$72,511</span></p>
+        <label for="monthly-payment">Monthly Payment</label>
+        <h3 id="monthly-payment"></h3>
+        <p id="interest-amount"></p> <!-- Added for interest amount -->
+        <p id="principal-amount"></p> <!-- Added for principal amount -->
     </div>
 
     <a href="#" class="button">Save calculations for later</a>
 </div>
 
 <script>
-    function calculateStampDuty(price) {
-        let stampDuty = 0;
-
-        if (price <= 120000) {
-            stampDuty = price * 1.9 / 100;
-        } else if (price <= 150000) {
-            stampDuty = 2280 + (price - 120000) * 2.85 / 100;
-        } else if (price <= 360000) {
-            stampDuty = 3135 + (price - 150000) * 3.8 / 100;
-        } else if (price <= 725000) {
-            stampDuty = 11115 + (price - 360000) * 4.75 / 100;
-        } else {
-            stampDuty = 28453 + (price - 725000) * 5.15 / 100;
-        }
-
-        return stampDuty.toFixed(2);
+   function calculateMonthlyPayment(loanAmount, interestRate, loanPeriod) {
+        let monthlyRate = interestRate / 100 / 12;
+        let numberOfPayments = loanPeriod * 12;
+        let monthlyPayment = (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -numberOfPayments));
+        return monthlyPayment.toFixed(2);
     }
 
     function calculate() {
-        let price = parseFloat(document.getElementById('property-price').value);
-        let savings = parseFloat(document.getElementById('savings').value);
+        let loanAmount = parseFloat(document.getElementById('loan-amount').value);
+        let interestRate = parseFloat(document.getElementById('interest-rate').value);
+        let loanPeriod = parseFloat(document.getElementById('loan-period').value);
 
-        let stampDuty = parseFloat(calculateStampDuty(price));
-        let transferFee = 258; // Fixed amount for transfer fee
-        let governmentFees = 188; // Fixed amount for government fees
+        let monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, loanPeriod);
+        let monthlyRate = interestRate / 100 / 12;
+        let interestAmount = (loanAmount * monthlyRate).toFixed(2); // Calculate interest for the first month
+        let principalAmount = (monthlyPayment - interestAmount).toFixed(2); // Calculate principal for the first month
 
-        let availableDeposit = savings - (stampDuty + transferFee + governmentFees);
-        let loanAmount = price - availableDeposit;
-
-        // LMI Calculation (Example logic: if deposit < 20% of property price)
-        let lmiCost = 0;
-        if (availableDeposit < price * 0.2) {
-            lmiCost = (price - availableDeposit) * 0.01; // Example LMI calculation
-        }
-
-        let estimatedRepayments = Math.round(loanAmount * 0.00545); // Just a sample formula
-
-        document.getElementById('stamp-duty').innerText = `$${stampDuty}`;
-        document.getElementById('transfer-fee').innerText = `$${transferFee}`;
-        document.getElementById('government-fees').innerText = `$${governmentFees}`;
-        document.getElementById('lmi-cost').innerText = `$${lmiCost.toFixed(2)}`;
-        document.getElementById('available-deposit').innerText = `$${Math.round(availableDeposit)}`;
-        document.getElementById('loan-amount').innerText = `$${Math.round(loanAmount)}`;
-        document.getElementById('estimated-repayments').innerText = `$${estimatedRepayments} per fortnight`;
+        document.getElementById('monthly-payment').innerText = `$${monthlyPayment}`;
+        document.getElementById('interest-amount').innerText = `Interest: $${interestAmount}`; // Display interest amount
+        document.getElementById('principal-amount').innerText = `Principal: $${principalAmount}`; // Display principal amount
     }
 
-    document.getElementById('property-price').addEventListener('input', calculate);
-    document.getElementById('savings').addEventListener('input', calculate);
+    document.getElementById('loan-amount').addEventListener('input', calculate);
+    document.getElementById('interest-rate').addEventListener('input', calculate);
+    document.getElementById('loan-period').addEventListener('input', calculate);
 
     calculate(); // Initial calculation
 </script>
