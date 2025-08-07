@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Timer Icons</title>
+</head>
+<body>
+    <h1>Timer PWA Icon Generator</h1>
+    <p>This will generate the required PNG icons for the PWA manifest.</p>
+    
+    <canvas id="icon192" width="192" height="192"></canvas>
+    <canvas id="icon512" width="512" height="512"></canvas>
+    
+    <div id="downloads"></div>
+    
+    <script>
+        function createIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            // Draw background circle
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - size/50, 0, 2 * Math.PI);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/128;
+            ctx.stroke();
+            
+            // Draw timer circle (75% complete)
+            const radius = size/2 - size/16;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, radius, -Math.PI/2, -Math.PI/2 + 2 * Math.PI * 0.75);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/32;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Draw center dot
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/40, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            
+            // Draw clock hands
+            ctx.beginPath();
+            ctx.moveTo(size/2, size/2);
+            ctx.lineTo(size/2, size/2 - radius * 0.6);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/64;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(size/2, size/2);
+            ctx.lineTo(size/2 + radius * 0.4, size/2);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/80;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        // Generate icons
+        const icon192 = createIcon(document.getElementById('icon192'), 192);
+        const icon512 = createIcon(document.getElementById('icon512'), 512);
+        
+        // Create download links
+        const downloads = document.getElementById('downloads');
+        downloads.innerHTML = `
+            <h3>Download Icons:</h3>
+            <p><a href="${icon192}" download="icon-192.png">Download 192x192 Icon</a></p>
+            <p><a href="${icon512}" download="icon-512.png">Download 512x512 Icon</a></p>
+            <p>Save these files in the timer folder as icon-192.png and icon-512.png</p>
+        `;
+    </script>
+</body>
+</html>

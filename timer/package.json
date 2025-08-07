@@ -1,0 +1,27 @@
+{
+  "name": "professional-timer-pwa",
+  "version": "1.0.0",
+  "description": "A beautiful circular timer PWA for productivity and focus sessions",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -p 8000",
+    "dev": "npx live-server --port=8000",
+    "build-icons": "node generate-icons.js"
+  },
+  "keywords": [
+    "timer",
+    "pwa",
+    "productivity",
+    "focus",
+    "pomodoro"
+  ],
+  "author": "Timer App",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0",
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2"
+  }
+}
