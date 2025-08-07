@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PWA Test Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .test-section {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PWA Functionality Test</h1>
+
+    <div class="test-section">
+      <h2>Service Worker Status</h2>
+      <div id="sw-status" class="status">Checking...</div>
+      <button onclick="checkServiceWorker()">Check Service Worker</button>
+      <button onclick="unregisterServiceWorker()">
+        Unregister Service Worker
+      </button>
+    </div>
+
+    <div class="test-section">
+      <h2>PWA Install Status</h2>
+      <div id="install-status" class="status">Checking...</div>
+      <button id="install-btn" onclick="installPWA()" style="display: none">
+        Install App
+      </button>
+    </div>
+
+    <div class="test-section">
+      <h2>Cache Status</h2>
+      <div id="cache-status" class="status">Checking...</div>
+      <button onclick="checkCache()">Check Cache</button>
+      <button onclick="clearCache()">Clear Cache</button>
+    </div>
+
+    <div class="test-section">
+      <h2>Manifest Test</h2>
+      <div id="manifest-status" class="status">Checking...</div>
+      <button onclick="checkManifest()">Check Manifest</button>
+    </div>
+
+    <div class="test-section">
+      <h2>Quick Links</h2>
+      <a href="index.html" target="_blank"><button>Open Timer App</button></a>
+      <a href="dist/index.html" target="_blank"
+        ><button>Open Built Timer App</button></a
+      >
+    </div>
+
+    <script>
+      let deferredPrompt;
+
+      // Check service worker
+      async function checkServiceWorker() {
+        const statusDiv = document.getElementById("sw-status");
+
+        if ("serviceWorker" in navigator) {
+          try {
+            const registration =
+              await navigator.serviceWorker.getRegistration();
+            if (registration) {
+              statusDiv.className = "status success";
+              statusDiv.innerHTML = `
+                            ✅ Service Worker is registered<br>
+                            Scope: ${registration.scope}<br>
+                            State: ${
+                              registration.active ? "Active" : "Installing"
+                            }
+                        `;
+            } else {
+              statusDiv.className = "status warning";
+              statusDiv.innerHTML = "⚠️ Service Worker not registered";
+            }
+          } catch (error) {
+            statusDiv.className = "status error";
+            statusDiv.innerHTML = `❌ Error: ${error.message}`;
+          }
+        } else {
+          statusDiv.className = "status error";
+          statusDiv.innerHTML = "❌ Service Worker not supported";
+        }
+      }
+
+      // Unregister service worker
+      async function unregisterServiceWorker() {
+        if ("serviceWorker" in navigator) {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            await registration.unregister();
+            document.getElementById("sw-status").innerHTML =
+              "Service Worker unregistered";
+          }
+        }
+      }
+
+      // Check cache
+      async function checkCache() {
+        const statusDiv = document.getElementById("cache-status");
+
+        if ("caches" in window) {
+          try {
+            const cacheNames = await caches.keys();
+            const cacheList = cacheNames.join(", ");
+            statusDiv.className = "status success";
+            statusDiv.innerHTML = `✅ Caches found: ${cacheList || "None"}`;
+          } catch (error) {
+            statusDiv.className = "status error";
+            statusDiv.innerHTML = `❌ Cache error: ${error.message}`;
+          }
+        } else {
+          statusDiv.className = "status error";
+          statusDiv.innerHTML = "❌ Cache API not supported";
+        }
+      }
+
+      // Clear cache
+      async function clearCache() {
+        if ("caches" in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map((name) => caches.delete(name)));
+          document.getElementById("cache-status").innerHTML = "Cache cleared";
+        }
+      }
+
+      // Check manifest
+      async function checkManifest() {
+        const statusDiv = document.getElementById("manifest-status");
+
+        try {
+          const response = await fetch("manifest.json");
+          if (response.ok) {
+            const manifest = await response.json();
+            statusDiv.className = "status success";
+            statusDiv.innerHTML = `
+                        ✅ Manifest loaded successfully<br>
+                        Name: ${manifest.name}<br>
+                        Short Name: ${manifest.short_name}<br>
+                        Display: ${manifest.display}
+                    `;
+          } else {
+            statusDiv.className = "status error";
+            statusDiv.innerHTML = "❌ Manifest not found";
+          }
+        } catch (error) {
+          statusDiv.className = "status error";
+          statusDiv.innerHTML = `❌ Manifest error: ${error.message}`;
+        }
+      }
+
+      // PWA install handling
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+
+        const statusDiv = document.getElementById("install-status");
+        const installBtn = document.getElementById("install-btn");
+
+        statusDiv.className = "status success";
+        statusDiv.innerHTML = "✅ PWA install prompt available";
+        installBtn.style.display = "inline-block";
+      });
+
+      window.addEventListener("appinstalled", (evt) => {
+        const statusDiv = document.getElementById("install-status");
+        const installBtn = document.getElementById("install-btn");
+
+        statusDiv.className = "status success";
+        statusDiv.innerHTML = "✅ PWA installed successfully";
+        installBtn.style.display = "none";
+      });
+
+      function installPWA() {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === "accepted") {
+              console.log("User accepted the install prompt");
+            } else {
+              console.log("User dismissed the install prompt");
+            }
+            deferredPrompt = null;
+            document.getElementById("install-btn").style.display = "none";
+          });
+        }
+      }
+
+      // Initialize tests
+      window.addEventListener("load", () => {
+        checkServiceWorker();
+        checkCache();
+        checkManifest();
+
+        // Check if PWA is already installed
+        if (window.matchMedia("(display-mode: standalone)").matches) {
+          document.getElementById("install-status").innerHTML =
+            "✅ PWA is already installed";
+        }
+      });
+    </script>
+  </body>
+</html>
