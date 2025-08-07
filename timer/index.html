@@ -63,29 +63,17 @@
 
       .timer-container {
         position: relative;
-        width: 300px;
-        height: 300px;
+        width: 280px;
+        height: 280px;
         margin: 0 auto 40px;
         filter: drop-shadow(0 8px 32px rgba(102, 126, 234, 0.15));
       }
 
-      .circle-bg,
-      .circle-progress {
+      #timerCanvas {
         position: absolute;
         top: 0;
         left: 0;
-      }
-
-      .circle-bg circle {
-        stroke: #f3f4f6;
-        stroke-width: 12;
-      }
-
-      .circle-progress circle {
-        stroke: url(#gradientStroke);
-        stroke-width: 12;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 0.3s ease;
+        z-index: 1;
       }
 
       .timer-label {
@@ -94,8 +82,8 @@
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        width: 70%;
-        max-width: 200px;
+        width: 80%;
+        max-width: 180px;
         pointer-events: none;
         z-index: 10;
       }
@@ -487,8 +475,13 @@
         }
 
         .timer-container {
-          width: 280px;
-          height: 280px;
+          width: 260px;
+          height: 260px;
+        }
+
+        #timerCanvas {
+          width: 260px;
+          height: 260px;
         }
 
         .time-display {
@@ -496,8 +489,8 @@
         }
 
         .timer-label {
-          width: 65%;
-          max-width: 180px;
+          width: 75%;
+          max-width: 160px;
         }
 
         .preset-buttons {
@@ -521,8 +514,13 @@
         }
 
         .timer-container {
-          width: 260px;
-          height: 260px;
+          width: 240px;
+          height: 240px;
+        }
+
+        #timerCanvas {
+          width: 240px;
+          height: 240px;
         }
 
         .time-display {
@@ -530,8 +528,8 @@
         }
 
         .timer-label {
-          width: 60%;
-          max-width: 160px;
+          width: 70%;
+          max-width: 140px;
         }
 
         .preset-buttons {
@@ -579,8 +577,13 @@
         }
 
         .timer-container {
-          width: 240px;
-          height: 240px;
+          width: 220px;
+          height: 220px;
+        }
+
+        #timerCanvas {
+          width: 220px;
+          height: 220px;
         }
 
         .time-display {
@@ -588,8 +591,8 @@
         }
 
         .timer-label {
-          width: 55%;
-          max-width: 140px;
+          width: 65%;
+          max-width: 120px;
         }
 
         .preset-buttons {
@@ -652,8 +655,13 @@
         }
 
         .timer-container {
-          width: 200px;
-          height: 200px;
+          width: 180px;
+          height: 180px;
+        }
+
+        #timerCanvas {
+          width: 180px;
+          height: 180px;
         }
 
         .time-display {
@@ -661,8 +669,8 @@
         }
 
         .timer-label {
-          width: 50%;
-          max-width: 120px;
+          width: 60%;
+          max-width: 100px;
         }
 
         .label-title {
@@ -708,8 +716,13 @@
         }
 
         .timer-container {
-          width: 180px;
-          height: 180px;
+          width: 160px;
+          height: 160px;
+        }
+
+        #timerCanvas {
+          width: 160px;
+          height: 160px;
         }
 
         .time-display {
@@ -717,8 +730,8 @@
         }
 
         .timer-label {
-          width: 45%;
-          max-width: 100px;
+          width: 55%;
+          max-width: 80px;
         }
 
         .label-title {
@@ -769,8 +782,13 @@
         }
 
         .timer-container {
-          width: 320px;
-          height: 320px;
+          width: 300px;
+          height: 300px;
+        }
+
+        #timerCanvas {
+          width: 300px;
+          height: 300px;
         }
 
         .time-display {
@@ -807,8 +825,13 @@
         }
 
         .timer-container {
-          width: 360px;
-          height: 360px;
+          width: 340px;
+          height: 340px;
+        }
+
+        #timerCanvas {
+          width: 340px;
+          height: 340px;
         }
 
         .time-display {
@@ -836,34 +859,7 @@
       <p class="subtitle">Stay focused and productive</p>
 
       <div class="timer-container">
-        <svg class="circle-bg" width="300" height="300">
-          <circle cx="150" cy="150" r="135" fill="none" />
-        </svg>
-        <svg class="circle-progress" width="300" height="300">
-          <defs>
-            <linearGradient
-              id="gradientStroke"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stop-color="#667eea" />
-              <stop offset="50%" stop-color="#764ba2" />
-              <stop offset="100%" stop-color="#667eea" />
-            </linearGradient>
-          </defs>
-          <circle
-            id="progress"
-            cx="150"
-            cy="150"
-            r="135"
-            fill="none"
-            stroke="url(#gradientStroke)"
-            stroke-dasharray="848.23"
-            stroke-dashoffset="0"
-          />
-        </svg>
+        <canvas id="timerCanvas" width="280" height="280"></canvas>
         <div class="timer-label" id="timerLabel">
           <span class="label-title" id="labelTitle"></span>
           <div class="time-display" id="timeText">00:00</div>
@@ -953,14 +949,17 @@
 
     <script>
       // Professional timer logic
-      const FULL_DASH_ARRAY = 2 * Math.PI * 135; // r=135 for circle
+      const FULL_DASH_ARRAY = 2 * Math.PI * 110; // r=110 for circle
       let duration = 60;
       let timeLeft = 60;
       let timerInterval = null;
       let running = false;
       let timerLabel = "";
+      let startTime = null;
+      let backgroundTimer = null;
 
-      const progressCircle = document.getElementById("progress");
+      const canvas = document.getElementById("timerCanvas");
+      const ctx = canvas.getContext("2d");
       const timerLabelDiv = document.getElementById("timerLabel");
       const labelTitle = document.getElementById("labelTitle");
       const timeText = document.getElementById("timeText");
@@ -968,9 +967,51 @@
       const minutesInput = document.getElementById("minutesInput");
       const alarm = document.getElementById("alarm");
 
-      function updateCircle() {
+      // Canvas setup
+      const strokeWidth = 16;
+
+      // Function to resize canvas
+      function resizeCanvas() {
+        const container = canvas.parentElement;
+        // Ensure square and responsive
+        const size = Math.min(container.offsetWidth, container.offsetHeight);
+        canvas.width = size;
+        canvas.height = size;
+        drawCircle();
+      }
+
+      function drawCircle() {
+        // Calculate center and radius fresh each draw
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = canvas.width / 2 - strokeWidth / 2;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw background circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#f3f4f6";
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+
+        // Draw progress circle
         const percent = timeLeft / duration;
-        progressCircle.style.strokeDashoffset = (1 - percent) * FULL_DASH_ARRAY;
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + 2 * Math.PI * percent;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+
+        // Gradient
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        gradient.addColorStop(0, "#667eea");
+        gradient.addColorStop(0.5, "#764ba2");
+        gradient.addColorStop(1, "#667eea");
+
+        ctx.strokeStyle = gradient;
+        ctx.lineCap = "round";
+        ctx.stroke();
       }
 
       function updateLabelDisplay() {
@@ -995,19 +1036,19 @@
         running = true;
 
         updateLabelDisplay();
-        updateCircle();
+        drawCircle();
 
         timerInterval = setInterval(() => {
           timeLeft--;
           updateLabelDisplay();
-          updateCircle();
+          drawCircle();
 
           if (timeLeft <= 0) {
             clearInterval(timerInterval);
             running = false;
             timeText.textContent = "🎉 TIME'S UP!";
             timeText.classList.add("time-up");
-            progressCircle.style.strokeDashoffset = FULL_DASH_ARRAY;
+            drawCircle(); // Redraw with full circle
 
             // Play alarm sound with error handling
             try {
@@ -1046,11 +1087,15 @@
         timerLabel = labelInput.value.trim();
         timeText.classList.remove("time-up");
         updateLabelDisplay();
-        updateCircle();
+        drawCircle();
       }
 
       // Initial setup
+      resizeCanvas();
       resetTimer();
+
+      // Handle window resize
+      window.addEventListener("resize", resizeCanvas);
 
       // History & Stats functionality
       function getHistory() {
