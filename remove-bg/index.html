@@ -1,10 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brush to Remove Shadow</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            cursor: crosshair;
+        }
+        #upload {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-$END$
+<h1>Brush to Remove Shadow</h1>
+<input type="file" id="upload" accept="image/*">
+<canvas id="canvas"></canvas>
+<p>Brush over shadowed areas to gradually lighten them.</p>
+
+<script>
+    const upload = document.getElementById("upload");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let img = new Image();
+    let isBrushing = false;
+    let brushSize = 30; // Diameter of the brush
+    let lightenAmount = 20; // Amount to lighten each time
+
+    // Load and display the image on the canvas
+    upload.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+            };
+        }
+    });
+
+    // Start brushing when the mouse is pressed
+    canvas.addEventListener("mousedown", (e) => {
+        isBrushing = true;
+        brushShadowRemoval(e.offsetX, e.offsetY);
+    });
+
+    // Continue brushing as the mouse moves
+    canvas.addEventListener("mousemove", (e) => {
+        if (isBrushing) {
+            brushShadowRemoval(e.offsetX, e.offsetY);
+        }
+    });
+
+    // Stop brushing when the mouse is released
+    canvas.addEventListener("mouseup", () => {
+        isBrushing = false;
+    });
+
+    // Function to lighten the shadow in the brushed area with a soft, round brush effect
+    function brushShadowRemoval(x, y) {
+        const radius = brushSize / 2;
+        const imageData = ctx.getImageData(x - radius, y - radius, brushSize, brushSize);
+        const data = imageData.data;
+
+        // Calculate distance from the center for each pixel to create a soft brush effect
+        for (let j = 0; j < brushSize; j++) {
+            for (let i = 0; i < brushSize; i++) {
+                const dx = i - radius;
+                const dy = j - radius;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < radius) {
+                    const index = (j * brushSize + i) * 4;
+                    const factor = 1 - distance / radius; // Gradual lightening closer to the center
+
+                    data[index] = Math.min(data[index] + lightenAmount * factor, 255);       // Red
+                    data[index + 1] = Math.min(data[index + 1] + lightenAmount * factor, 255); // Green
+                    data[index + 2] = Math.min(data[index + 2] + lightenAmount * factor, 255); // Blue
+                }
+            }
+        }
+
+        // Put the modified data back onto the canvas
+        ctx.putImageData(imageData, x - radius, y - radius);
+    }
+</script>
 </body>
 </html>

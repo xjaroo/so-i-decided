@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract Table Data and Generate SQL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #pdf-container {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+            height: 200px;
+            overflow: auto;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Extract Transactions and Generate SQL</h1>
+
+<!-- Exclusion Keywords Input as Textarea -->
+<label for="exclusionKeywords">Enter Exclusion Keywords (one per line):</label>
+<textarea id="exclusionKeywords" placeholder="Enter exclusion keywords here...">
+    Minimum payment
+    PERIODICAL PAYMENTS
+</textarea>
+
+<input type="file" id="file-input" accept="application/pdf" />
+<button onclick="copySQL()">Copy SQL to Clipboard</button>
+
+<div id="pdf-container"></div>
+<h2>Generated SQL Queries</h2>
+<pre id="outputSQL"></pre>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+<script>
+    let generatedSQL = '';
+
+    const input = document.getElementById('file-input');
+    const outputSQL = document.getElementById('outputSQL');
+    const exclusionKeywordsInput = document.getElementById('exclusionKeywords');
+
+    input.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+
+        if (file && file.type === 'application/pdf') {
+            const fileReader = new FileReader();
+
+            fileReader.onload = function() {
+                const typedArray = new Uint8Array(this.result);
+                pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+                    let pagePromises = [];
+
+                    // Loop through all the pages
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        pagePromises.push(pdf.getPage(i).then(page => page.getTextContent()));
+                    }
+
+                    Promise.all(pagePromises).then(pagesText => {
+                        let sqlQueries = [];
+
+                        // Get the exclusion keywords from textarea and split by new line
+                        const exclusionKeywords = exclusionKeywordsInput.value
+                            .split('\n')
+                            .map(keyword => keyword.trim().toLowerCase())
+                            .filter(keyword => keyword.length > 0);  // Ignore empty lines
+
+                        pagesText.forEach(textContent => {
+                            let pageText = textContent.items.map(item => item.str).join(' ');
+
+                            // Use a regex to match transaction patterns (Date, Description, Amount)
+                            let transactionPattern = /\d{2} [A-Za-z]{3} \d{2} [^$]+ \$[\d,]+\.\d{2}/g;
+                            let matches = pageText.match(transactionPattern);
+
+                            if (matches) {
+                                matches.forEach(match => {
+
+                                    let parts = match.split(' ');
+                                    let date = parts.slice(0, 3).join(' ');  // First three parts are the date
+                                    let amount = parts.pop().replace('$', '').replace(',', '');  // Remove dollar sign and comma
+                                    let description = parts.slice(3).join(' ');  // Remaining parts are the description
+
+                                    // Convert both description and keywords to lowercase for case-insensitive comparison
+                                    let descriptionLower = description.toLowerCase();
+
+                                    // Check if the description contains any excluded keywords
+                                    if (!exclusionKeywords.some(keyword => descriptionLower.includes(keyword))) {
+                                        let formattedDate = convertDateToSQLFormat(date);  // Convert date to 'YYYY-MM-DD'
+
+                                        // Generate SQL INSERT statement
+                                        let query = `INSERT INTO tax (tax_date, item, amount) VALUES ('${formattedDate}', '${description.replace("'", "''")}', ${amount});`;
+                                        sqlQueries.push(query);
+                                    }
+                                });
+                            }
+                        });
+
+                        // Display and store the generated SQL queries
+                        generatedSQL = sqlQueries.join('\n');
+                        outputSQL.textContent = generatedSQL;
+                    });
+                });
+            };
+
+            // Read the file as an ArrayBuffer
+            fileReader.readAsArrayBuffer(file);
+        }
+    });
+
+    function convertDateToSQLFormat(dateStr) {
+        // Convert "02 Jun 24" to "2024-06-02"
+        let [day, month, year] = dateStr.split(' ');
+        month = month.toLowerCase();
+        const months = {
+            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        return `20${year}-${months[month]}-${day.padStart(2, '0')}`;
+    }
+
+    function copySQL() {
+        if (generatedSQL) {
+            navigator.clipboard.writeText(generatedSQL).then(() => {
+                alert('SQL queries copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        } else {
+            alert('No SQL queries to copy.');
+        }
+    }
+</script>
+
+</body>
+</html>

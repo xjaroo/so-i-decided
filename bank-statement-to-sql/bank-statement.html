@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Extract Transactions and Generate SQL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #pdf-container {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+            height: 200px;
+            overflow: auto;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Extract Transactions and Generate SQL</h1>
+
+<!-- Exclusion Keywords Input as Textarea -->
+<label for="exclusionKeywords">Enter Exclusion Keywords (one per line):</label>
+<textarea id="exclusionKeywords" placeholder="Enter exclusion keywords here...">
+Minimum payment
+</textarea>
+
+<input type="file" id="file-input" accept="application/pdf" />
+<button onclick="copySQL()">Copy SQL to Clipboard</button>
+
+<div id="pdf-container"></div>
+<h2>Generated SQL Queries</h2>
+<pre id="outputSQL"></pre>
+
+<!-- Include PDF.js and Tesseract.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+
+<script>
+    let generatedSQL = '';
+
+    const input = document.getElementById('file-input');
+    const outputSQL = document.getElementById('outputSQL');
+    const exclusionKeywordsInput = document.getElementById('exclusionKeywords');
+
+    input.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+
+        if (file && file.type === 'application/pdf') {
+            const fileReader = new FileReader();
+
+            fileReader.onload = function() {
+                const typedArray = new Uint8Array(this.result);
+                pdfjsLib.getDocument(typedArray).promise.then(async function(pdf) {
+                    let pagePromises = [];
+
+                    // Loop through all the pages
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        pagePromises.push(processPage(pdf, i));
+                    }
+
+                    const allOCRResults = await Promise.all(pagePromises);
+                    let sqlQueries = [];
+
+                    // Get the exclusion keywords from textarea and split by new line
+                    const exclusionKeywords = exclusionKeywordsInput.value
+                        .split('\n')
+                        .map(keyword => keyword.trim().toLowerCase())
+                        .filter(keyword => keyword.length > 0);  // Ignore empty lines
+
+                    allOCRResults.forEach(ocrResult => {
+                        // Process OCR result to extract transactions
+                        let transactions = parseOCRResult(ocrResult);
+
+                        transactions.forEach(transaction => {
+                            // Exclusion check
+                            let descriptionLower = transaction.description.toLowerCase();
+                            if (!exclusionKeywords.some(keyword => descriptionLower.includes(keyword))) {
+                                // Generate SQL INSERT statement
+                                let query = `INSERT INTO tax (tax_date, tax_item, amount ) VALUES ('${transaction.date}', '${transaction.description.replace(/'/g, "''")}', ${transaction.amount});`;
+                                sqlQueries.push(query);
+                            }
+                        });
+                    });
+
+                    // Display and store the generated SQL queries
+                    generatedSQL = sqlQueries.join('\n');
+                    outputSQL.textContent = generatedSQL;
+                });
+            };
+
+            // Read the file as an ArrayBuffer
+            fileReader.readAsArrayBuffer(file);
+        }
+    });
+
+    async function processPage(pdf, pageNumber) {
+        const page = await pdf.getPage(pageNumber);
+        const viewport = page.getViewport({ scale: 2.0 });
+
+        // Create a canvas to render the PDF page
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+        // Convert canvas to data URL (image)
+        const dataURL = canvas.toDataURL('image/png');
+
+        // Perform OCR on the image using Tesseract.js
+        const ocrResult = await Tesseract.recognize(
+            dataURL,
+            'eng',
+            {
+                logger: m => (m)
+            }
+        );
+
+        return ocrResult.data;
+    }
+
+
+    function mergeTextAndZeroBBox(dataArray) {
+        if (dataArray.length > 3) {
+            // Step 1: Find the index where `text` starts with `$`
+            const dollarIndex = dataArray.findIndex(item => item?.text?.startsWith('$'));
+
+            // Return if no dollar text is found or only one item exists before it
+            if (dollarIndex === -1 || dollarIndex <= 1) return dataArray;
+
+            // Step 2: Merge the `text` from index 1 to dollarIndex - 1
+            let mergedText = '';
+            for (let i = 1; i < dollarIndex; i++) {
+                mergedText += dataArray[i].text + ' ';
+            }
+            mergedText = mergedText.trim(); // Trim any extra whitespace
+
+
+            dataArray[1].text = mergedText;
+            dataArray[1].bbox = { x0: 0, y0: 0, x1: 0, y1: 0 };
+
+            // Step 4: Remove intermediate entries between index 2 and dollarIndex - 1
+            dataArray.splice(2, dollarIndex - 2);
+
+debugger
+
+            return dataArray;
+        } else {
+            return [];
+        }
+    }
+
+    function parseOCRResult(ocrData) {
+        let transactions = [];
+        let lines = ocrData.lines;
+
+        // Collect x positions of amounts to determine thresholdX
+        let amountXs = [];
+
+        // First pass: identify amount positions
+        lines.forEach(line => {
+            line.words.forEach(word => {
+                if (isAmount(word.text)) {
+                    amountXs.push(word.bbox.x0);
+                }
+            });
+        });
+
+        if (amountXs.length === 0) {
+            return transactions; // No amounts found
+        }
+
+        // Determine thresholdX to differentiate between debits and credits
+        amountXs.sort((a, b) => a - b);
+        let thresholdX = (amountXs[0] + amountXs[amountXs.length - 1]) / 2;
+
+        // Second pass: process transactions
+        lines.forEach(line => {
+
+            const _words = line.words.map(item => {
+                if(item.text != '—'){
+                    return {
+                        text: item.text,
+                        bbox: {...item.bbox} // assuming bbox is inside baseline
+                    }
+                }
+            });
+            const words= mergeTextAndZeroBBox(_words.filter(obj =>  obj && obj?.text !== ''));
+            console.table(_words)
+            console.table( words)
+            if (words.length >= 3 && isDate(words[0]?.text )) {
+                let dateStr = convertDateToSQLFormat(words[0].text);
+
+                // Find the amount in the line
+                let amountWord = words.find(word => isAmount(word.text));
+                if (amountWord) {
+                    let amount = amountWord.text.replace('$', '').replace(/,/g, '');
+                    // let descriptionWords = words.slice(3, words.indexOf(amountWord));
+                    // let description = descriptionWords.map(word => word.text).join(' ');
+                     let description = words[1].text;
+
+                    console.table(amountWord.text, amountWord.bbox.x1)
+                    // Determine credit or debit
+                    let isDebit = amountWord.bbox.x1 < 900;
+
+                    if (isDebit){
+                        transactions.push({
+                            date: dateStr,
+                            description: description,
+                            amount: amount,
+                        });
+                    }
+
+                }
+            }
+        });
+
+        return transactions;
+    }
+
+    function isDate(dateString) {
+        const datePattern =/(\d{2})([A-Z]{3})(\d{2})/
+        return datePattern.test(dateString) ;
+    }
+
+    function isAmount(text) {
+        return /^\$?[\d,]+\.\d{2}$/.test(text);
+    }
+
+    function convertDateToSQLFormat(dateString) {
+        // Convert "02Jun24" to "2024-06-02"
+
+        let [_, day, month, year] = dateString.match(/(\d{2})([A-Z]{3})(\d{2})/);
+        month = month.toLowerCase();
+        const months = {
+            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        return `20${year}-${months[month]}-${day.padStart(2, '0')}`;
+    }
+
+    function copySQL() {
+        if (generatedSQL) {
+            navigator.clipboard.writeText(generatedSQL).then(() => {
+                alert('SQL queries copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        } else {
+            alert('No SQL queries to copy.');
+        }
+    }
+</script>
+
+</body>
+</html>
