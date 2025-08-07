@@ -6,38 +6,46 @@ This timer app is now configured as a Progressive Web App (PWA) that can be inst
 
 1. **manifest.json** - Web app manifest with app metadata
 2. **service-worker.js** - Service worker for offline functionality
-3. **index.html** - Updated with PWA meta tags and service worker registration
+3. **index.html** - Source HTML file with PWA meta tags and service worker registration
 4. **create-icons.html** - Tool to generate required PNG icons
+5. **build.js** - Build script that creates optimized index.html in dist/
 
 ## Setup Steps
 
 ### 1. Generate Icons
+
 Open `create-icons.html` in a web browser and download the generated PNG icons:
+
 - Save as `icon-192.png` (192x192 pixels)
 - Save as `icon-512.png` (512x512 pixels)
 
 ### 2. Test the PWA
+
 1. Serve the timer folder using a local web server (required for service workers)
 2. Open the timer in Chrome/Edge
 3. Look for the install icon in the address bar or menu
 4. Click "Add to Home Screen" or "Install"
 
 ### 3. Local Development Server
+
 You can use any of these methods to serve the files locally:
 
 **Using Python:**
+
 ```bash
 cd timer
 python -m http.server 8000
 ```
 
 **Using Node.js:**
+
 ```bash
 cd timer
 npx serve .
 ```
 
 **Using PHP:**
+
 ```bash
 cd timer
 php -S localhost:8000

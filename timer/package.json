@@ -4,9 +4,14 @@
   "description": "A beautiful circular timer PWA for productivity and focus sessions",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve . -p 8000",
+    "start": "npm run build && npx serve dist -p 8000",
     "dev": "npx live-server --port=8000",
-    "build-icons": "node generate-icons.js"
+    "build": "node build.js",
+    "build:advanced": "node build-advanced.js",
+    "build-icons": "node generate-icons.js",
+    "serve-dist": "npx serve dist -p 8000",
+    "deploy": "npm run build && npm run serve-dist",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "timer",

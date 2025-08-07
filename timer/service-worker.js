@@ -1,12 +1,10 @@
 const CACHE_NAME = "professional-timer-v1.0.0";
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/service-worker.js",
-  "/timer-terminer-342934.mp3",
-  "/icon-192.png",
-  "/icon-512.png"
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./service-worker.js",
+  "./timer-terminer-342934.mp3"
 ];
 
 // Install SW and cache resources
@@ -14,19 +12,32 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("Opened cache");
-      return cache.addAll(urlsToCache);
+      // Cache files one by one to handle missing files gracefully
+      return Promise.allSettled(
+        urlsToCache.map(url => 
+          cache.add(url).catch(error => {
+            console.warn(`Failed to cache ${url}:`, error);
+            return null;
+          })
+        )
+      );
     })
   );
 });
 
 // Fetch from cache, then network
 self.addEventListener("fetch", (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== "GET") {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Return cached version or fetch from network
       return response || fetch(event.request).then((fetchResponse) => {
-        // Don't cache non-GET requests or non-successful responses
-        if (event.request.method !== "GET" || !fetchResponse || fetchResponse.status !== 200) {
+        // Don't cache non-successful responses
+        if (!fetchResponse || fetchResponse.status !== 200) {
           return fetchResponse;
         }
 
@@ -34,10 +45,19 @@ self.addEventListener("fetch", (event) => {
         const responseToCache = fetchResponse.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+          cache.put(event.request, responseToCache).catch(error => {
+            console.warn("Failed to cache response:", error);
+          });
         });
 
         return fetchResponse;
+      }).catch(error => {
+        console.warn("Fetch failed:", error);
+        // Return a fallback response if needed
+        return new Response("Offline content not available", {
+          status: 503,
+          statusText: "Service Unavailable"
+        });
       });
     })
   );

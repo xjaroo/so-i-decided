@@ -1,0 +1,12 @@
+{
+  "buildTime": "2025-08-07T07:32:06.107Z",
+  "version": "1.0.0",
+  "files": [
+    "icon-192.png",
+    "icon-512.png",
+    "index.html",
+    "manifest.json",
+    "service-worker.js",
+    "timer-terminer-342934.mp3"
+  ]
+}
